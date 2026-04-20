@@ -1,7 +1,7 @@
 <?php use Intranet\Core\Helpers; ?>
 <div class="glass-panel p-4 col-12 col-xl-8 mx-auto">
     <h1 class="h4">Edit Post</h1>
-    <form method="post" action="/post/<?= (int) $post['id'] ?>/edit" class="vstack gap-3">
+    <form method="post" action="<?= !empty($isAdminEdit) ? '/admin/posts/' . (int) $post['id'] . '/edit' : '/post/' . (int) $post['id'] . '/edit' ?>" class="vstack gap-3">
         <input type="hidden" name="_csrf" value="<?= Helpers::e($csrf) ?>">
         <input type="text" class="form-control" name="title" value="<?= Helpers::e($post['title']) ?>" required>
         <textarea class="form-control" name="description" rows="4"><?= Helpers::e($post['description']) ?></textarea>

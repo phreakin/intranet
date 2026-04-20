@@ -30,6 +30,12 @@ final class AdminRepository
             'hot_posts' => $db->query('SELECT id, title, like_count, comment_count, favorite_count, bookmark_count
                                        FROM posts ORDER BY (like_count + comment_count + favorite_count + bookmark_count) DESC LIMIT 8')->fetchAll(),
             'activity_overview' => $db->query('SELECT DATE(created_at) AS day, COUNT(*) AS posts FROM posts WHERE created_at > DATE_SUB(NOW(), INTERVAL 7 DAY) GROUP BY day ORDER BY day')->fetchAll(),
+            'ai_flags' => $db->query('SELECT id, target_type, target_id, risk_level, confidence, recommendation, suggested_tags, review_status, admin_decision, created_at
+                                      FROM ai_moderation_logs
+                                      ORDER BY created_at DESC LIMIT 20')->fetchAll(),
+            'categories' => $db->query('SELECT id, name, slug, created_at FROM categories ORDER BY name ASC LIMIT 100')->fetchAll(),
+            'tags' => $db->query('SELECT id, name, slug, created_at FROM tags ORDER BY name ASC LIMIT 150')->fetchAll(),
+            'manageable_posts' => $db->query('SELECT p.id, p.title, u.display_name, p.created_at FROM posts p JOIN users u ON u.id = p.user_id ORDER BY p.created_at DESC LIMIT 30')->fetchAll(),
         ];
     }
 
@@ -75,5 +81,140 @@ final class AdminRepository
     public function commentTags(): array
     {
         return Database::connection()->query('SELECT * FROM comment_tags ORDER BY name ASC')->fetchAll();
+    }
+
+    public function findPost(int $id): ?array
+    {
+        $sql = 'SELECT p.*, GROUP_CONCAT(DISTINCT t.name) AS tags
+                FROM posts p
+                LEFT JOIN post_tags pt ON pt.post_id = p.id
+                LEFT JOIN tags t ON t.id = pt.tag_id
+                WHERE p.id = :id
+                GROUP BY p.id';
+        $stmt = Database::connection()->prepare($sql);
+        $stmt->execute(['id' => $id]);
+        return $stmt->fetch() ?: null;
+    }
+
+    public function updatePostEditable(int $postId, string $title, string $description, ?int $categoryId, array $tags, int $actorId): void
+    {
+        $db = Database::connection();
+        $db->prepare('UPDATE posts SET title = :title, description = :description, category_id = :category_id, updated_at = NOW() WHERE id = :id')
+            ->execute([
+                'title' => $title,
+                'description' => $description,
+                'category_id' => $categoryId,
+                'id' => $postId,
+            ]);
+
+        $db->prepare('DELETE FROM post_tags WHERE post_id = :post_id')->execute(['post_id' => $postId]);
+        foreach ($tags as $tag) {
+            $name = trim($tag);
+            if ($name === '') {
+                continue;
+            }
+            $slug = strtolower(trim(preg_replace('/[^a-z0-9]+/i', '-', $name), '-'));
+            $db->prepare('INSERT INTO tags (name, slug, created_at) VALUES (:name, :slug, NOW()) ON DUPLICATE KEY UPDATE name = VALUES(name)')
+                ->execute(['name' => $name, 'slug' => $slug]);
+            $tagIdStmt = $db->prepare('SELECT id FROM tags WHERE slug = :slug LIMIT 1');
+            $tagIdStmt->execute(['slug' => $slug]);
+            $tagId = (int) $tagIdStmt->fetchColumn();
+            $db->prepare('INSERT INTO post_tags (post_id, tag_id) VALUES (:post_id, :tag_id)')
+                ->execute(['post_id' => $postId, 'tag_id' => $tagId]);
+        }
+
+        $db->prepare('INSERT INTO moderation_logs (actor_user_id, target_type, target_id, action, detail, created_at)
+                      VALUES (:actor_user_id, :target_type, :target_id, :action, :detail, NOW())')
+            ->execute([
+                'actor_user_id' => $actorId,
+                'target_type' => 'post',
+                'target_id' => $postId,
+                'action' => 'edit',
+                'detail' => 'Admin updated post metadata',
+            ]);
+    }
+
+    public function deletePost(int $postId, int $actorId): void
+    {
+        $db = Database::connection();
+        $db->prepare('INSERT INTO moderation_logs (actor_user_id, target_type, target_id, action, detail, created_at)
+                      VALUES (:actor_user_id, :target_type, :target_id, :action, :detail, NOW())')
+            ->execute([
+                'actor_user_id' => $actorId,
+                'target_type' => 'post',
+                'target_id' => $postId,
+                'action' => 'delete',
+                'detail' => 'Admin deleted post',
+            ]);
+        $db->prepare('DELETE FROM posts WHERE id = :id')->execute(['id' => $postId]);
+    }
+
+    public function createCategory(string $name): void
+    {
+        $trimmed = trim($name);
+        if ($trimmed === '') {
+            return;
+        }
+        $slug = strtolower(trim(preg_replace('/[^a-z0-9]+/i', '-', $trimmed), '-'));
+        Database::connection()->prepare('INSERT INTO categories (name, slug, created_at) VALUES (:name, :slug, NOW())
+            ON DUPLICATE KEY UPDATE name = VALUES(name)')
+            ->execute(['name' => $trimmed, 'slug' => $slug]);
+    }
+
+    public function createTag(string $name): void
+    {
+        $trimmed = trim($name);
+        if ($trimmed === '') {
+            return;
+        }
+        $slug = strtolower(trim(preg_replace('/[^a-z0-9]+/i', '-', $trimmed), '-'));
+        Database::connection()->prepare('INSERT INTO tags (name, slug, created_at) VALUES (:name, :slug, NOW())
+            ON DUPLICATE KEY UPDATE name = VALUES(name)')
+            ->execute(['name' => $trimmed, 'slug' => $slug]);
+    }
+
+    public function usersWithRolesBadges(): array
+    {
+        return Database::connection()->query('SELECT u.id, u.display_name, u.email, GROUP_CONCAT(DISTINCT r.name) AS roles, GROUP_CONCAT(DISTINCT b.name) AS badges
+                             FROM users u
+                             LEFT JOIN user_roles ur ON ur.user_id = u.id
+                             LEFT JOIN roles r ON r.id = ur.role_id
+                             LEFT JOIN user_badges ub ON ub.user_id = u.id
+                             LEFT JOIN badges b ON b.id = ub.badge_id
+                             GROUP BY u.id ORDER BY u.created_at DESC LIMIT 100')->fetchAll();
+    }
+
+    public function allBadges(): array
+    {
+        return Database::connection()->query('SELECT id, name FROM badges ORDER BY name ASC')->fetchAll();
+    }
+
+    public function allRoles(): array
+    {
+        return Database::connection()->query('SELECT id, name FROM roles ORDER BY name ASC')->fetchAll();
+    }
+
+    public function assignBadge(int $userId, int $badgeId, int $actorId): void
+    {
+        Database::connection()->prepare('INSERT IGNORE INTO user_badges (user_id, badge_id, assigned_by, created_at) VALUES (:user_id, :badge_id, :assigned_by, NOW())')
+            ->execute(['user_id' => $userId, 'badge_id' => $badgeId, 'assigned_by' => $actorId]);
+    }
+
+    public function assignRole(int $userId, int $roleId): void
+    {
+        Database::connection()->prepare('INSERT IGNORE INTO user_roles (user_id, role_id) VALUES (:user_id, :role_id)')
+            ->execute(['user_id' => $userId, 'role_id' => $roleId]);
+    }
+
+    public function reviewAiLog(int $id, string $decision, int $actorId): void
+    {
+        Database::connection()->prepare('UPDATE ai_moderation_logs
+            SET review_status = :status, admin_decision = :decision, admin_reviewed_by = :reviewed_by, reviewed_at = NOW()
+            WHERE id = :id')->execute([
+            'status' => in_array($decision, ['accepted', 'overridden'], true) ? 'reviewed' : 'rejected',
+            'decision' => $decision,
+            'reviewed_by' => $actorId,
+            'id' => $id,
+        ]);
     }
 }

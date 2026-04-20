@@ -224,16 +224,22 @@ CREATE TABLE ai_moderation_logs (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     target_type VARCHAR(40) NOT NULL,
     target_id BIGINT UNSIGNED NOT NULL,
+    input_context TEXT NULL,
     ai_provider VARCHAR(100) NOT NULL,
     confidence DECIMAL(5,4) NOT NULL,
     risk_level VARCHAR(40) NOT NULL,
     recommendation VARCHAR(255) NOT NULL,
+    action_recommended VARCHAR(120) NULL,
     suggested_tags VARCHAR(255) NULL,
     raw_response JSON NULL,
     auto_action_taken TINYINT(1) NOT NULL DEFAULT 0,
     review_status VARCHAR(40) NOT NULL DEFAULT 'pending',
+    admin_decision VARCHAR(40) NOT NULL DEFAULT 'pending',
+    admin_reviewed_by BIGINT UNSIGNED NULL,
+    reviewed_at DATETIME NULL,
     created_at DATETIME NOT NULL,
-    INDEX idx_ai_review (review_status, created_at)
+    INDEX idx_ai_review (review_status, created_at),
+    FOREIGN KEY (admin_reviewed_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE settings (

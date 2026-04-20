@@ -158,7 +158,7 @@ final class PostRepository
         }
     }
 
-    public function addComment(int $postId, int $userId, string $body): void
+    public function addComment(int $postId, int $userId, string $body): int
     {
         Database::connection()->prepare('INSERT INTO comments (post_id, user_id, body, moderation_state, is_hidden, created_at, updated_at) VALUES (:post_id, :user_id, :body, :state, 0, NOW(), NOW())')
             ->execute([
@@ -167,7 +167,9 @@ final class PostRepository
                 'body' => $body,
                 'state' => 'visible',
             ]);
+        $commentId = (int) Database::connection()->lastInsertId();
         Database::connection()->prepare('UPDATE posts SET comment_count = comment_count + 1 WHERE id = :id')->execute(['id' => $postId]);
+        return $commentId;
     }
 
     public function recordInteraction(string $table, int $postId, int $userId): void

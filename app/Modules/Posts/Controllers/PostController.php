@@ -36,10 +36,49 @@ final class PostController
     public function createForm(): void
     {
         Auth::requireAuth();
+        $url = trim((string) ($_GET['url'] ?? ''));
+        $prefill = [
+            'url' => $url,
+            'title' => trim((string) ($_GET['title'] ?? '')),
+            'description' => trim((string) ($_GET['description'] ?? '')),
+            'thumbnail_url' => trim((string) ($_GET['image'] ?? '')),
+            'tags' => trim((string) ($_GET['tags'] ?? '')),
+            'site_name' => '',
+            'canonical_url' => $url,
+            'author_name' => '',
+            'published_at' => '',
+        ];
+        $metaError = null;
+        if ($url !== '' && filter_var($url, FILTER_VALIDATE_URL)) {
+            try {
+                $meta = (new MetadataExtractorService())->extract($url);
+            } catch (\Throwable $e) {
+                $meta = [];
+                $metaError = 'Metadata fetch blocked for this URL.';
+            }
+            $prefill['title'] = $prefill['title'] !== '' ? $prefill['title'] : (string) ($meta['title'] ?? '');
+            $prefill['description'] = $prefill['description'] !== '' ? $prefill['description'] : (string) ($meta['description'] ?? '');
+            $prefill['thumbnail_url'] = $prefill['thumbnail_url'] !== '' ? $prefill['thumbnail_url'] : (string) ($meta['thumbnail'] ?? '');
+            $prefill['site_name'] = (string) ($meta['site_name'] ?? '');
+            $prefill['canonical_url'] = (string) ($meta['canonical_url'] ?? $url);
+            $prefill['author_name'] = (string) ($meta['author'] ?? '');
+            $prefill['published_at'] = (string) ($meta['publish_date'] ?? '');
+            if ($prefill['tags'] === '' && !empty($meta['keywords'])) {
+                $prefill['tags'] = implode(', ', (array) $meta['keywords']);
+            }
+            if (!empty($meta['raw_error'])) {
+                $metaError = (string) $meta['raw_error'];
+            }
+        } elseif ($url !== '') {
+            $metaError = 'Please enter a valid URL to fetch metadata.';
+        }
+
         View::render('posts/submit', [
             'title' => 'Submit Link',
             'categories' => (new PostRepository())->categories(),
             'csrf' => Csrf::token(),
+            'prefill' => $prefill,
+            'metaError' => $metaError,
         ]);
     }
 
@@ -62,8 +101,25 @@ final class PostController
             return;
         }
 
-        $metaService = new MetadataExtractorService();
-        $meta = $metaService->extract($url);
+        try {
+            $meta = (new MetadataExtractorService())->extract($url);
+        } catch (\Throwable $e) {
+            View::render('posts/submit', [
+                'title' => 'Submit Link',
+                'error' => 'Metadata fetch blocked for this URL.',
+                'categories' => (new PostRepository())->categories(),
+                'csrf' => Csrf::token(),
+                'prefill' => ['url' => $url],
+            ]);
+            return;
+        }
+        $title = trim((string) ($_POST['title'] ?? ''));
+        $description = trim((string) ($_POST['description'] ?? ''));
+        $thumbnailUrl = trim((string) ($_POST['thumbnail_url'] ?? ''));
+        $siteName = trim((string) ($_POST['site_name'] ?? ''));
+        $canonicalUrl = trim((string) ($_POST['canonical_url'] ?? ''));
+        $authorName = trim((string) ($_POST['author_name'] ?? ''));
+        $publishedAt = trim((string) ($_POST['published_at'] ?? ''));
 
         $repo = new PostRepository();
         $categoryId = (int) ($_POST['category_id'] ?? 0);
@@ -72,21 +128,34 @@ final class PostController
             $categoryId = $repo->createCategoryIfMissing($newCategory);
         }
 
-        $manualTags = array_map('trim', explode(',', (string) ($_POST['tags'] ?? '')));
-        $tags = $meta['keywords'] !== [] ? $meta['keywords'] : $manualTags;
+        $manualTags = array_values(array_filter(array_map('trim', explode(',', (string) ($_POST['tags'] ?? '')))));
+        $tags = $manualTags !== [] ? $manualTags : (array) ($meta['keywords'] ?? []);
+
+        $canonical = $canonicalUrl !== '' && filter_var($canonicalUrl, FILTER_VALIDATE_URL) ? $canonicalUrl : ((string) ($meta['canonical_url'] ?? $url));
+        $thumb = $thumbnailUrl !== '' && filter_var($thumbnailUrl, FILTER_VALIDATE_URL) ? $thumbnailUrl : ((string) ($meta['thumbnail'] ?? ''));
+        $publishDate = $this->normalizeDateTime($publishedAt !== '' ? $publishedAt : (string) ($meta['publish_date'] ?? ''));
+        $mergedMeta = $meta;
+        $mergedMeta['title'] = $title !== '' ? $title : (string) ($meta['title'] ?? $url);
+        $mergedMeta['description'] = $description !== '' ? $description : (string) ($meta['description'] ?? '');
+        $mergedMeta['thumbnail'] = $thumb;
+        $mergedMeta['site_name'] = $siteName !== '' ? $siteName : (string) ($meta['site_name'] ?? '');
+        $mergedMeta['canonical_url'] = $canonical;
+        $mergedMeta['author'] = $authorName !== '' ? $authorName : (string) ($meta['author'] ?? '');
+        $mergedMeta['publish_date'] = $publishDate;
+        $mergedMeta['keywords'] = $tags;
 
         $postId = $repo->create([
             'user_id' => (int) Auth::user()['id'],
             'category_id' => $categoryId > 0 ? $categoryId : null,
             'url' => $url,
-            'canonical_url' => $meta['canonical_url'] ?: $url,
-            'title' => $meta['title'] ?: $url,
-            'description' => $meta['description'] ?? '',
-            'thumbnail_url' => $meta['thumbnail'] ?? '',
-            'site_name' => $meta['site_name'] ?? '',
-            'author_name' => $meta['author'] ?? '',
-            'published_at' => $meta['publish_date'],
-            'metadata_json' => json_encode($meta, JSON_THROW_ON_ERROR),
+            'canonical_url' => $canonical,
+            'title' => $mergedMeta['title'],
+            'description' => $mergedMeta['description'],
+            'thumbnail_url' => $thumb,
+            'site_name' => $mergedMeta['site_name'],
+            'author_name' => $mergedMeta['author'],
+            'published_at' => $publishDate,
+            'metadata_json' => json_encode($mergedMeta, JSON_THROW_ON_ERROR),
         ]);
 
         $repo->syncTags($postId, $tags);
@@ -115,8 +184,10 @@ final class PostController
         }
 
         $repo = new PostRepository();
-        $repo->addComment($id, (int) Auth::user()['id'], $body);
-        (new AiModerationService())->analyze('comment', $id, $body);
+        $commentId = $repo->addComment($id, (int) Auth::user()['id'], $body);
+        if ($commentId > 0) {
+            (new AiModerationService())->analyze('comment', $commentId, $body);
+        }
 
         Helpers::redirect('/post/' . $id);
     }
@@ -237,5 +308,17 @@ final class PostController
         $tags = array_map('trim', explode(',', (string) ($_POST['tags'] ?? '')));
         (new PostRepository())->updateEditable($id, (int) Auth::user()['id'], $title, $description, $categoryId, $tags);
         Helpers::redirect('/post/' . $id);
+    }
+
+    private function normalizeDateTime(string $value): ?string
+    {
+        if ($value === '') {
+            return null;
+        }
+        $ts = strtotime($value);
+        if ($ts === false) {
+            return null;
+        }
+        return date('Y-m-d H:i:s', $ts);
     }
 }

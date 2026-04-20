@@ -8,7 +8,7 @@ final class MetadataExtractorService
 {
     public function extract(string $url): array
     {
-        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+        if (!filter_var($url, FILTER_VALIDATE_URL) || !$this->isSafeFetchUrl($url)) {
             throw new \InvalidArgumentException('Invalid URL provided.');
         }
 
@@ -82,5 +82,33 @@ final class MetadataExtractorService
             ],
             'raw_error' => null,
         ];
+    }
+
+    private function isSafeFetchUrl(string $url): bool
+    {
+        $parts = parse_url($url);
+        $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+        $host = (string) ($parts['host'] ?? '');
+        if (!in_array($scheme, ['http', 'https'], true) || $host === '') {
+            return false;
+        }
+        if ($host === 'localhost') {
+            return false;
+        }
+
+        $records = @dns_get_record($host, DNS_A + DNS_AAAA);
+        if (!is_array($records) || $records === []) {
+            return false;
+        }
+        foreach ($records as $record) {
+            $ip = (string) ($record['ip'] ?? $record['ipv6'] ?? '');
+            if ($ip === '') {
+                continue;
+            }
+            if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                return false;
+            }
+        }
+        return true;
     }
 }
