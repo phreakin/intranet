@@ -247,3 +247,69 @@ CREATE TABLE settings (
     `value` TEXT NULL,
     updated_at DATETIME NOT NULL
 );
+
+ALTER TABLE roles
+    ADD COLUMN created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE permissions
+    ADD COLUMN `group_key` VARCHAR(80) NOT NULL DEFAULT 'general',
+    ADD COLUMN description VARCHAR(255) NULL;
+
+CREATE TABLE pages (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    author_user_id BIGINT UNSIGNED NOT NULL,
+    category_id BIGINT UNSIGNED NULL,
+    content_type VARCHAR(32) NOT NULL DEFAULT 'page',
+    title VARCHAR(255) NOT NULL,
+    slug VARCHAR(180) NOT NULL UNIQUE,
+    excerpt TEXT NULL,
+    body_markdown MEDIUMTEXT NOT NULL,
+    body_html MEDIUMTEXT NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'draft',
+    scheduled_publish_at DATETIME NULL,
+    published_at DATETIME NULL,
+    engagement_score INT UNSIGNED NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    INDEX idx_pages_status (status, content_type),
+    INDEX idx_pages_updated (updated_at),
+    INDEX idx_pages_category (category_id),
+    FULLTEXT KEY ft_pages_content (title, excerpt, body_markdown),
+    FOREIGN KEY (author_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+);
+
+CREATE TABLE page_tags (
+    page_id BIGINT UNSIGNED NOT NULL,
+    tag_id BIGINT UNSIGNED NOT NULL,
+    PRIMARY KEY (page_id, tag_id),
+    FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE,
+    FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+);
+
+CREATE TABLE page_revisions (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    page_id BIGINT UNSIGNED NOT NULL,
+    edited_by BIGINT UNSIGNED NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    excerpt TEXT NULL,
+    body_markdown MEDIUMTEXT NOT NULL,
+    body_html MEDIUMTEXT NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    created_at DATETIME NOT NULL,
+    INDEX idx_page_revisions_page (page_id, created_at),
+    FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE,
+    FOREIGN KEY (edited_by) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE module_registry (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    module_name VARCHAR(120) NOT NULL UNIQUE,
+    enabled TINYINT(1) NOT NULL DEFAULT 1,
+    version VARCHAR(40) NOT NULL DEFAULT '1.0.0',
+    config_json JSON NULL,
+    updated_at DATETIME NOT NULL
+);
+
+ALTER TABLE posts
+    ADD FULLTEXT KEY ft_posts_content (title, description);

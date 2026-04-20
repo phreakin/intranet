@@ -1,14 +1,18 @@
 INSERT INTO roles (name) VALUES ('Admin'), ('Moderator'), ('Member');
 
 INSERT INTO permissions (name) VALUES
-('posts.create'), ('posts.edit'), ('posts.report'),
-('comments.moderate'), ('reports.review'), ('admin.access'), ('users.manage'), ('badges.manage');
+('create_post'), ('edit_post'), ('delete_post'), ('moderate_post'),
+('create_comment'), ('delete_comment'), ('moderate_comment'),
+('create_page'), ('edit_page'), ('publish_page'), ('delete_page'),
+('access_admin'), ('manage_users'), ('manage_roles'), ('manage_settings'),
+('approve_ai_actions'), ('override_ai'),
+('view_logs'), ('manage_modules');
 
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id FROM roles r JOIN permissions p
 WHERE (r.name = 'Admin')
-   OR (r.name = 'Moderator' AND p.name IN ('comments.moderate','reports.review','admin.access'))
-   OR (r.name = 'Member' AND p.name IN ('posts.create','posts.report'));
+   OR (r.name = 'Moderator' AND p.name IN ('moderate_post','create_comment','delete_comment','moderate_comment','create_page','edit_page','publish_page','access_admin','approve_ai_actions','override_ai','view_logs'))
+   OR (r.name = 'Member' AND p.name IN ('create_post','edit_post','create_comment','create_page','edit_page'));
 
 INSERT INTO badges (name, description, created_at) VALUES
 ('Contributor', 'Submitted useful links', NOW()),
@@ -34,6 +38,11 @@ INSERT INTO settings (`key`,`value`,updated_at) VALUES
 ('feature.ai.enabled', '0', NOW()),
 ('feature.ai.auto_remove', '0', NOW()),
 ('system.health.status', 'ok', NOW());
+
+INSERT INTO module_registry (module_name, enabled, version, config_json, updated_at) VALUES
+('CoreCMS', 1, '1.0.0', JSON_OBJECT('routes', JSON_ARRAY('/pages/{slug}', '/articles/{slug}')), NOW()),
+('RBACAdmin', 1, '1.0.0', JSON_OBJECT('admin_panels', JSON_ARRAY('roles', 'permissions')), NOW()),
+('Search', 1, '1.0.0', JSON_OBJECT('features', JSON_ARRAY('fulltext', 'fallback_like')), NOW());
 
 INSERT INTO categories (name, slug, created_at) VALUES
 ('Security', 'security', NOW()),

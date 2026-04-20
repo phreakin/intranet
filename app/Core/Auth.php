@@ -69,4 +69,29 @@ final class Auth
             exit('Forbidden');
         }
     }
+
+    public static function hasPermission(string ...$permissions): bool
+    {
+        $user = self::user();
+        if ($user === null) {
+            return false;
+        }
+
+        $userPermissions = array_map('strtolower', array_filter(explode(',', (string) ($user['permissions'] ?? ''))));
+        foreach ($permissions as $permission) {
+            if (in_array(strtolower($permission), $userPermissions, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static function requirePermission(string ...$permissions): void
+    {
+        if (!self::hasPermission(...$permissions)) {
+            http_response_code(403);
+            exit('Forbidden');
+        }
+    }
 }
