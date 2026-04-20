@@ -1,0 +1,19 @@
+{
+  "name": "phreakin/intranet-prompt",
+  "description": "Modular private home intranet system",
+  "type": "project",
+  "require": {
+    "php": "^8.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "Intranet\\": "app/"
+    }
+  },
+  "scripts": {
+    "test": [
+      "php -l public/index.php",
+      "find app -name '*.php' -print0 | xargs -0 -n1 php -l"
+    ]
+  }
+}
