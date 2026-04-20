@@ -1,4 +1,4 @@
-# Home Intranet System
+# Home Intranet
 
 A modular private home intranet intelligence system for a single Linux server (PHP 8.2+, MySQL 8+, jQuery, Bootstrap 5 SSR-first).
 
