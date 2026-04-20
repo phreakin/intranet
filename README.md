@@ -1,4 +1,4 @@
-# Intranet Prompt
+# Home Intranet System
 
 A modular private home intranet intelligence system for a single Linux server (PHP 8.2+, MySQL 8+, jQuery, Bootstrap 5 SSR-first).
 
@@ -40,8 +40,8 @@ A modular private home intranet intelligence system for a single Linux server (P
 2. Configure MySQL and OAuth values in `.env`.
 3. Create database and apply schema:
    ```bash
-   mysql -u root -p intranet_prompt < database/migrations/001_initial_schema.sql
-   mysql -u root -p intranet_prompt < database/seeds/001_seed.sql
+   mysql -u root -p intranet < database/migrations/001_initial_schema.sql
+   mysql -u root -p intranet < database/seeds/001_seed.sql
    ```
 4. Run locally:
    ```bash
