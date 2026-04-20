@@ -13,6 +13,14 @@ use Intranet\Modules\Users\Controllers\UserController;
 require dirname(__DIR__) . '/bootstrap.php';
 
 session_name(Config::get('app', 'session_name', 'intranet_prompt'));
+session_set_cookie_params([
+    'lifetime' => 0,
+    'path' => '/',
+    'domain' => '',
+    'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+    'httponly' => true,
+    'samesite' => 'Lax',
+]);
 session_start();
 
 $router = new Router();
@@ -54,6 +62,14 @@ $router->add('GET', '/admin', static fn () => $admin->dashboard());
 $router->add('GET', '/admin/moderation', static fn () => $admin->moderationQueue());
 $router->add('GET', '/admin/reports', static fn () => $admin->reports());
 $router->add('GET', '/admin/users-badges', static fn () => $admin->usersBadges());
+$router->add('GET', '/admin/posts/{id}/edit', static fn (array $p) => $admin->editPostForm((int) $p['id']));
+$router->add('POST', '/admin/posts/{id}/edit', static fn (array $p) => $admin->editPost((int) $p['id']));
+$router->add('POST', '/admin/posts/{id}/delete', static fn (array $p) => $admin->deletePost((int) $p['id']));
+$router->add('POST', '/admin/categories', static fn () => $admin->createCategory());
+$router->add('POST', '/admin/tags', static fn () => $admin->createTag());
+$router->add('POST', '/admin/users/{id}/badge', static fn (array $p) => $admin->assignBadge((int) $p['id']));
+$router->add('POST', '/admin/users/{id}/role', static fn (array $p) => $admin->assignRole((int) $p['id']));
+$router->add('POST', '/admin/ai/{id}/review', static fn (array $p) => $admin->reviewAiLog((int) $p['id']));
 $router->add('POST', '/admin/comments/{id}/hide', static fn (array $p) => $admin->hideComment((int) $p['id']));
 $router->add('POST', '/admin/comments/{id}/unhide', static fn (array $p) => $admin->unhideComment((int) $p['id']));
 $router->add('POST', '/admin/comments/{id}/tag', static fn (array $p) => $admin->tagComment((int) $p['id']));

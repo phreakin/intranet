@@ -10,9 +10,11 @@ A modular private home intranet intelligence system for a single Linux server (P
 - RBAC with Admin / Moderator / Member and global admin route protection
 - User profiles with role display, badge display, and activity stats
 - Post system with categories, tags, comments, interactions, reporting, favorites, bookmarks
+- Two-step URL submission workflow with metadata fetch + editable metadata before save
 - Automatic dynamic post status tagging (`New`, `Trending`, `Rising`, `Popular`, `Hot`, `Discussed`, `Controversial`, `Needs Review`)
 - Admin dashboard with self-aware operational recommendations
 - Moderation queue with comment hide/unhide and moderation tagging
+- Admin management actions for posts, taxonomy, and user role/badge assignments
 - AI moderation integration layer with auditable logs and optional auto-action
 - Bookmarklet for admin quick-submission prefill
 - Full MySQL schema + seed data for required entities
@@ -55,9 +57,10 @@ A modular private home intranet intelligence system for a single Linux server (P
 - CSRF token validation on write actions
 - Prepared PDO statements (no interpolated user values)
 - URL validation before metadata fetch
+- Safe metadata fetch guard that blocks localhost/private-network targets
 - Output escaping in views
 - RBAC gate checks on admin/mod endpoints
-- AI actions logged in `ai_moderation_logs`; destructive AI actions require explicit `AI_AUTO_REMOVE=1`
+- AI actions logged in `ai_moderation_logs` with input context and admin decision trail; destructive AI actions require explicit `AI_AUTO_REMOVE=1`
 
 ## AI moderation flow
 
