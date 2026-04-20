@@ -185,7 +185,9 @@ final class PostController
 
         $repo = new PostRepository();
         $commentId = $repo->addComment($id, (int) Auth::user()['id'], $body);
-        (new AiModerationService())->analyze('comment', $commentId, $body);
+        if ($commentId > 0) {
+            (new AiModerationService())->analyze('comment', $commentId, $body);
+        }
 
         Helpers::redirect('/post/' . $id);
     }

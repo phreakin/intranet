@@ -98,7 +98,7 @@ final class MetadataExtractorService
 
         $records = @dns_get_record($host, DNS_A + DNS_AAAA);
         if (!is_array($records) || $records === []) {
-            return true;
+            return false;
         }
         foreach ($records as $record) {
             $ip = (string) ($record['ip'] ?? $record['ipv6'] ?? '');
