@@ -103,14 +103,16 @@ function Get-CurrentBranch {
 function Get-ChangedFiles {
     $result = Invoke-Git -Arguments @("status", "--porcelain")
     if ([string]::IsNullOrWhiteSpace($result.Output)) {
-        return @()
+        return ,@()
     }
 
-    return @($result.Output -split "`r?`n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    $lines = @($result.Output -split "`r?`n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    return ,$lines
 }
 
 function Has-WorkingTreeChanges {
-    return (Get-ChangedFiles).Count -gt 0
+    $changedFiles = @(Get-ChangedFiles)
+    return $changedFiles.Count -gt 0
 }
 
 function Run-ValidationIfPresent {
