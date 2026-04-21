@@ -191,11 +191,12 @@ final class AdminCmsController
     }
 
     /**
-     * @return array{slug:string,title:string,summary:?string,body:string,status:string,layout:string}
+     * @return array{content_type:string,slug:string,title:string,summary:?string,body:string,status:string,layout:string}
      */
     private function pageInput(): array
     {
         return [
+            'content_type' => (string) ($_POST['content_type'] ?? 'page'),
             'slug' => trim((string) ($_POST['slug'] ?? '')),
             'title' => trim((string) ($_POST['title'] ?? 'Untitled')),
             'summary' => (string) ($_POST['summary'] ?? '') !== '' ? trim((string) $_POST['summary']) : null,

@@ -35,13 +35,14 @@
     "serve": "php -S 127.0.0.1:8080 -t public",
     "lint": [
       "php -l public/index.php",
-      "powershell -ExecutionPolicy Bypass -File scripts/lint.ps1"
+      "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/lint.ps1"
     ],
     "test": [
+      "php tests/run.php",
       "@lint"
     ],
     "sync": [
-      "powershell -ExecutionPolicy Bypass -File scripts/git_sync.ps1"
+      "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/git_sync.ps1"
     ]
   },
   "config": {

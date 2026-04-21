@@ -3,6 +3,12 @@
     <div class="col-lg-8">
         <article class="glass-panel p-4">
             <header class="mb-3">
+                <div class="page-actions mb-2">
+                    <span class="chip chip-category"><?= Helpers::e(ucfirst((string) ($contentType ?? 'page'))) ?></span>
+                    <?php if (!empty($page['status'])): ?>
+                        <span class="chip chip-status"><?= Helpers::e((string) $page['status']) ?></span>
+                    <?php endif; ?>
+                </div>
                 <h1 class="h3 mb-1"><?= Helpers::e($page['title']) ?></h1>
                 <?php if (!empty($page['summary'])): ?>
                     <p class="text-secondary mb-0"><?= Helpers::e($page['summary']) ?></p>

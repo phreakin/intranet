@@ -9,22 +9,37 @@ use Intranet\Modules\Cms\Repositories\CmsRepository;
 
 final class PageController
 {
-    public function show(string $slug): void
+    public function showPage(string $slug): void
+    {
+        $this->renderContent($slug, 'page');
+    }
+
+    public function showArticle(string $slug): void
+    {
+        $this->renderContent($slug, 'article');
+    }
+
+    public function showLegacyPage(string $slug): void
+    {
+        $this->renderContent($slug, 'page');
+    }
+
+    private function renderContent(string $slug, string $contentType): void
     {
         $repo = new CmsRepository();
-        $page = $repo->publishedPageBySlug($slug);
+        $page = $repo->publishedContentBySlug($slug, $contentType);
         if ($page === null) {
             http_response_code(404);
             View::render('errors/not_found', [
-                'title' => 'Page not found',
-                'message' => 'That page either does not exist or is not yet published.',
+                'title' => ucfirst($contentType) . ' not found',
+                'message' => 'That ' . $contentType . ' either does not exist or is not yet published.',
             ]);
             return;
         }
-
         View::render('cms/page', [
             'title' => (string) $page['title'],
             'page' => $page,
+            'contentType' => $contentType,
             'sidebar' => $repo->blockByKey('cms.sidebar.primary'),
         ]);
     }

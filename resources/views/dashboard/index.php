@@ -2,186 +2,76 @@
 
 use Intranet\Core\Helpers;
 
-$posts = $posts ?? [];
-$newestPosts = array_slice($posts, 0, 4);
-$trendingPosts = array_values(array_filter($posts, static function (array $post): bool {
-    $status = strtolower((string) ($post['status_tags'] ?? ''));
-    return str_contains($status, 'trending') || str_contains($status, 'hot') || str_contains($status, 'popular');
-}));
-$trendingPosts = array_slice($trendingPosts !== [] ? $trendingPosts : $posts, 0, 4);
-
-$commentVolume = 0;
-$bookmarkVolume = 0;
-$missingThumbnailCount = 0;
-$categoryCounts = [];
-
-foreach ($posts as $post) {
-    $commentVolume += (int) ($post['comment_count'] ?? 0);
-    $bookmarkVolume += (int) ($post['bookmark_count'] ?? 0);
-    if (empty($post['thumbnail_url'])) {
-        $missingThumbnailCount++;
-    }
-
-    $category = (string) ($post['category_name'] ?? 'Uncategorized');
-    $categoryCounts[$category] = ($categoryCounts[$category] ?? 0) + 1;
-}
-
-arsort($categoryCounts);
-$dominantCategory = (string) array_key_first($categoryCounts);
-
-$activityFeed = [];
-foreach (array_slice($posts, 0, 5) as $index => $post) {
-    $activityFeed[] = [
-        'meta' => sprintf('Signal %02d', $index + 1),
-        'body' => sprintf(
-            '%s captured %d comments and %d bookmarks.',
-            (string) ($post['title'] ?? 'Untitled signal'),
-            (int) ($post['comment_count'] ?? 0),
-            (int) ($post['bookmark_count'] ?? 0)
-        ),
-    ];
-}
-
-$alerts = [
-    [
-        'severity' => $missingThumbnailCount > 4 ? 'high' : 'medium',
-        'title' => sprintf('%d posts missing thumbnails', $missingThumbnailCount),
-        'copy' => 'Backfill source previews to keep scan speed high across the dashboard.',
-    ],
-    [
-        'severity' => $bookmarkVolume > 12 ? 'low' : 'medium',
-        'title' => sprintf('%d bookmark events across the visible grid', $bookmarkVolume),
-        'copy' => 'High save activity usually means reference material worth tagging for fast retrieval.',
-    ],
-    [
-        'severity' => $dominantCategory !== '' ? 'low' : 'medium',
-        'title' => $dominantCategory !== '' ? 'Category gravity: ' . $dominantCategory : 'Category distribution incomplete',
-        'copy' => 'If one stream dominates, spin out a new taxonomy branch before the queue becomes noisy.',
-    ],
-];
+$dashboardWidgets = $dashboardWidgets ?? [];
+$dashboardGroups = $dashboardGroups ?? [];
+$dashboardAutoRefreshMs = (int) ($dashboardAutoRefreshMs ?? 60000);
 ?>
-<div class="page-shell">
+<div class="page-shell dashboard-shell" data-dashboard-shell data-dashboard-autorefresh-interval="<?= $dashboardAutoRefreshMs ?>">
     <section class="page-hero glass-panel">
         <div class="page-hero-grid">
             <div>
-                <span class="eyebrow">Control Room</span>
-                <h1 class="page-title">Investigative dashboard for live signals, hot content, and operator actions.</h1>
-                <p class="page-copy">This home screen behaves like a compact intelligence floor: newest submissions, active chatter, and system pressure points in one dense scan path.</p>
+                <span class="eyebrow">Interactive Control Room</span>
+                <h1 class="page-title">Modular intelligence dashboard with refreshable panels, activity filters, and operator controls.</h1>
+                <p class="page-copy">This is a lightweight server-rendered dashboard system with selective widget refresh, local panel state, and minimal JavaScript overhead.</p>
             </div>
             <div class="page-meta">
-                <span class="chip chip-status">Live Feed</span>
-                <span class="chip chip-category">Server Rendered</span>
-                <span class="chip chip-tag">Reusable Modules</span>
+                <span class="chip chip-status">Refreshable Widgets</span>
+                <span class="chip chip-category">SSR First</span>
+                <span class="chip chip-tag">Local State</span>
             </div>
         </div>
     </section>
 
-    <section class="metric-grid">
-        <article class="intel-stat-card">
-            <div class="intel-stat-label">Total Posts</div>
-            <div class="intel-stat-value"><?= count($posts) ?></div>
-            <div class="intel-stat-foot">Visible intelligence records in the active grid.</div>
-        </article>
-        <article class="intel-stat-card">
-            <div class="intel-stat-label">Comment Volume</div>
-            <div class="intel-stat-value"><?= $commentVolume ?></div>
-            <div class="intel-stat-foot">Conversation density across the current feed window.</div>
-        </article>
-        <article class="intel-stat-card">
-            <div class="intel-stat-label">Thumbnail Gaps</div>
-            <div class="intel-stat-value"><?= $missingThumbnailCount ?></div>
-            <div class="intel-stat-foot">Assets still missing visual confirmation.</div>
-        </article>
+    <section class="glass-panel dashboard-toolbar">
+        <div class="dashboard-toolbar-copy">
+            <div class="panel-kicker">Widget Filters</div>
+            <h2 class="panel-title">Interactive dashboard controls</h2>
+            <p class="panel-copy">Filter the board by signal type, refresh selected modules, or enable cheap timed updates.</p>
+        </div>
+
+        <div class="dashboard-toolbar-actions">
+            <label class="dashboard-field">
+                <span class="dashboard-field-label">View</span>
+                <select class="form-select form-select-sm" data-dashboard-filter>
+                    <?php foreach ($dashboardGroups as $groupKey => $groupLabel): ?>
+                        <option value="<?= Helpers::e($groupKey) ?>"><?= Helpers::e($groupLabel) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+
+            <button type="button" class="btn btn-outline-light btn-sm" data-dashboard-refresh-all>Refresh All</button>
+            <button type="button" class="btn btn-outline-info btn-sm" data-dashboard-autorefresh-toggle>Auto Refresh: Off</button>
+        </div>
     </section>
 
-    <div class="row g-3">
-        <div class="col-12 col-xxl-8">
-            <section class="glass-panel section-card">
-                <div class="intel-panel-header">
+    <div class="dashboard-grid" data-dashboard-grid>
+        <?php foreach ($dashboardWidgets as $widget): ?>
+            <?php
+            $templatePath = dirname(__DIR__, 1) . '/dashboard/widgets/' . $widget['template'] . '.php';
+            $widgetData = (array) ($widget['data'] ?? []);
+            ?>
+            <section
+                class="glass-panel dashboard-widget widget-span-<?= Helpers::e((string) $widget['span']) ?>"
+                data-widget-container
+                data-widget-name="<?= Helpers::e((string) $widget['name']) ?>"
+                data-widget-group="<?= Helpers::e((string) $widget['group']) ?>"
+            >
+                <div class="widget-header">
                     <div>
-                        <div class="panel-kicker">Newest Posts</div>
-                        <h2 class="panel-title">Freshly ingested signals</h2>
-                        <p class="panel-copy">High-density post cards built for quick triage, not blog browsing.</p>
+                        <h2 class="widget-title"><?= Helpers::e((string) $widget['title']) ?></h2>
+                        <span class="widget-meta"><?= Helpers::e((string) $widget['meta']) ?></span>
                     </div>
-                    <a class="btn btn-outline-light btn-sm" href="/submit">Add Signal</a>
+                    <div class="widget-actions">
+                        <button type="button" class="widget-action" data-widget-refresh="<?= Helpers::e((string) $widget['name']) ?>" title="Refresh widget">↻</button>
+                        <button type="button" class="widget-action" data-widget-collapse title="Collapse widget">–</button>
+                    </div>
                 </div>
-                <div class="row g-3">
-                    <?php foreach ($newestPosts as $post): ?>
-                        <div class="col-12 col-xl-6">
-                            <?php require dirname(__DIR__) . '/components/post_card.php'; ?>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </section>
-        </div>
 
-        <div class="col-12 col-xxl-4">
-            <section class="glass-panel section-card h-100">
-                <div class="intel-panel-header">
-                    <div>
-                        <div class="panel-kicker">Trending</div>
-                        <h2 class="panel-title">Hot content sweep</h2>
-                        <p class="panel-copy">Priority signals with the strongest engagement tags.</p>
-                    </div>
-                </div>
-                <div class="intel-feed-list">
-                    <?php foreach ($trendingPosts as $post): ?>
-                        <a class="intel-feed-item text-decoration-none" href="/post/<?= (int) $post['id'] ?>">
-                            <div class="intel-feed-meta"><?= Helpers::e($post['category_name'] ?? 'Uncategorized') ?></div>
-                            <div class="intel-feed-body"><strong><?= Helpers::e($post['title']) ?></strong></div>
-                            <div class="page-actions mt-2">
-                                <?php foreach (array_slice(array_filter(array_map('trim', explode(',', (string) ($post['status_tags'] ?? '')))), 0, 3) as $chip): ?>
-                                    <span class="chip chip-status"><?= Helpers::e($chip) ?></span>
-                                <?php endforeach; ?>
-                            </div>
-                        </a>
-                    <?php endforeach; ?>
+                <div class="widget-body" data-widget-body>
+                    <?php extract($widgetData, EXTR_SKIP); ?>
+                    <?php require $templatePath; ?>
                 </div>
             </section>
-        </div>
-
-        <div class="col-12 col-xl-6">
-            <section class="glass-panel section-card">
-                <div class="intel-panel-header">
-                    <div>
-                        <div class="panel-kicker">Activity Feed</div>
-                        <h2 class="panel-title">Comment and save movement</h2>
-                        <p class="panel-copy">Compact operator feed for volume spikes and chatter hotspots.</p>
-                    </div>
-                </div>
-                <div class="intel-feed-list">
-                    <?php foreach ($activityFeed as $item): ?>
-                        <div class="intel-feed-item">
-                            <div class="intel-feed-meta"><?= Helpers::e($item['meta']) ?></div>
-                            <div class="intel-feed-body"><?= Helpers::e($item['body']) ?></div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </section>
-        </div>
-
-        <div class="col-12 col-xl-6">
-            <section class="glass-panel section-card">
-                <div class="intel-panel-header">
-                    <div>
-                        <div class="panel-kicker">Recommendations</div>
-                        <h2 class="panel-title">System alerts and operator cues</h2>
-                        <p class="panel-copy">Actionable notices shaped like evidence cards instead of generic admin notices.</p>
-                    </div>
-                </div>
-                <div class="intel-alert-list">
-                    <?php foreach ($alerts as $alert): ?>
-                        <article class="intel-alert-card">
-                            <span class="alert-severity severity-<?= Helpers::e($alert['severity']) ?>"></span>
-                            <div class="flex-grow-1">
-                                <div class="intel-feed-meta"><?= strtoupper($alert['severity']) ?> SEVERITY</div>
-                                <div class="intel-feed-body"><strong><?= Helpers::e($alert['title']) ?></strong></div>
-                                <div class="panel-copy mt-1"><?= Helpers::e($alert['copy']) ?></div>
-                            </div>
-                        </article>
-                    <?php endforeach; ?>
-                </div>
-            </section>
-        </div>
+        <?php endforeach; ?>
     </div>
 </div>

@@ -10,13 +10,30 @@ final class CmsRepository
 {
     // ----- Pages ---------------------------------------------------------
 
-    public function publishedPageBySlug(string $slug): ?array
+    public function publishedContentBySlug(string $slug, string $contentType = 'page'): ?array
     {
         $stmt = Database::connection()->prepare(
-            "SELECT * FROM cms_pages WHERE slug = :slug AND status = 'published' LIMIT 1"
+            "SELECT * FROM cms_pages
+              WHERE slug = :slug
+                AND content_type = :content_type
+                AND status = 'published'
+              LIMIT 1"
         );
-        $stmt->execute(['slug' => $slug]);
+        $stmt->execute([
+            'slug' => $slug,
+            'content_type' => $this->normalizeContentType($contentType),
+        ]);
         return $stmt->fetch() ?: null;
+    }
+
+    public function publishedPageBySlug(string $slug): ?array
+    {
+        return $this->publishedContentBySlug($slug, 'page');
+    }
+
+    public function publishedArticleBySlug(string $slug): ?array
+    {
+        return $this->publishedContentBySlug($slug, 'article');
     }
 
     public function pageById(int $id): ?array
@@ -32,24 +49,26 @@ final class CmsRepository
     public function allPages(): array
     {
         return Database::connection()
-            ->query('SELECT id, slug, title, status, layout, published_at, updated_at FROM cms_pages ORDER BY updated_at DESC LIMIT 200')
+            ->query('SELECT id, content_type, slug, title, status, layout, published_at, updated_at FROM cms_pages ORDER BY updated_at DESC LIMIT 200')
             ->fetchAll();
     }
 
     /**
-     * @param array{slug:string,title:string,summary:?string,body:string,status:string,layout:string} $data
+     * @param array{content_type?:string,slug:string,title:string,summary:?string,body:string,status:string,layout:string} $data
      */
     public function createPage(array $data, int $authorId): int
     {
         $slug = $this->normalizeSlug($data['slug'] ?: $data['title']);
         $status = $this->normalizeStatus($data['status']);
+        $contentType = $this->normalizeContentType($data['content_type'] ?? 'page');
         $publishedAt = $status === 'published' ? date('Y-m-d H:i:s') : null;
 
         $stmt = Database::connection()->prepare(
-            'INSERT INTO cms_pages (slug, title, summary, body, status, layout, author_id, published_at, created_at, updated_at)
-             VALUES (:slug, :title, :summary, :body, :status, :layout, :author_id, :published_at, NOW(), NOW())'
+            'INSERT INTO cms_pages (content_type, slug, title, summary, body, status, layout, author_id, published_at, created_at, updated_at)
+             VALUES (:content_type, :slug, :title, :summary, :body, :status, :layout, :author_id, :published_at, NOW(), NOW())'
         );
         $stmt->execute([
+            'content_type' => $contentType,
             'slug' => $slug,
             'title' => $data['title'],
             'summary' => $data['summary'] ?? null,
@@ -64,7 +83,7 @@ final class CmsRepository
     }
 
     /**
-     * @param array{slug:string,title:string,summary:?string,body:string,status:string,layout:string} $data
+     * @param array{content_type?:string,slug:string,title:string,summary:?string,body:string,status:string,layout:string} $data
      */
     public function updatePage(int $id, array $data): void
     {
@@ -75,6 +94,7 @@ final class CmsRepository
 
         $slug = $this->normalizeSlug($data['slug'] ?: $data['title']);
         $status = $this->normalizeStatus($data['status']);
+        $contentType = $this->normalizeContentType($data['content_type'] ?? (string) ($existing['content_type'] ?? 'page'));
 
         // Preserve published_at when staying published; set it when moving to published; clear otherwise.
         $publishedAt = $existing['published_at'];
@@ -86,7 +106,8 @@ final class CmsRepository
 
         $stmt = Database::connection()->prepare(
             'UPDATE cms_pages
-                SET slug = :slug,
+                SET content_type = :content_type,
+                    slug = :slug,
                     title = :title,
                     summary = :summary,
                     body = :body,
@@ -97,6 +118,7 @@ final class CmsRepository
               WHERE id = :id'
         );
         $stmt->execute([
+            'content_type' => $contentType,
             'slug' => $slug,
             'title' => $data['title'],
             'summary' => $data['summary'] ?? null,
@@ -280,5 +302,11 @@ final class CmsRepository
     {
         $status = strtolower(trim($raw));
         return in_array($status, ['draft', 'published', 'archived'], true) ? $status : 'draft';
+    }
+
+    private function normalizeContentType(string $raw): string
+    {
+        $type = strtolower(trim($raw));
+        return in_array($type, ['page', 'article'], true) ? $type : 'page';
     }
 }

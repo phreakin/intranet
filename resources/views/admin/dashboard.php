@@ -110,6 +110,7 @@
                 <div class="page-actions mb-3">
                     <a class="btn btn-outline-light btn-sm" href="/admin/moderation">Open queue</a>
                     <a class="btn btn-outline-warning btn-sm" href="/admin/reports">Review reports</a>
+                    <a class="btn btn-outline-info btn-sm" href="/admin/cms/pages">CMS Pages</a>
                     <a class="btn btn-outline-success btn-sm" href="/admin/users-badges">Users & Badges</a>
                     <a class="btn btn-outline-info btn-sm" href="/admin/bookmarklet">Bookmarklet</a>
                 </div>
