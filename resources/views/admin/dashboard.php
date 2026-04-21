@@ -1,108 +1,245 @@
 <?php use Intranet\Core\Helpers; ?>
-<div class="glass-panel p-4 mb-3">
-    <h1 class="h3">Operational Intelligence Dashboard</h1>
-    <p class="text-secondary">Self-aware system insights, moderation pressure, and maintenance recommendations.</p>
-</div>
-<div class="row g-3 mb-3">
-    <?php foreach ([
-        'Reported posts' => $stats['reported_posts'] ?? 0,
-        'Reported comments' => $stats['reported_comments'] ?? 0,
-        'AI queue' => $stats['ai_queue'] ?? 0,
-        'Missing thumbnails' => $stats['missing_thumbnails'] ?? 0,
-        'Missing descriptions' => $stats['missing_descriptions'] ?? 0,
-        'Potential duplicates' => $stats['duplicates'] ?? 0,
-        'Report spikes today' => $stats['report_spike_today'] ?? 0,
-    ] as $label => $value): ?>
-        <div class="col-md-3 col-6"><div class="glass-subpanel p-3"><div class="small text-secondary"><?= Helpers::e($label) ?></div><div class="display-6"><?= (int) $value ?></div></div></div>
-    <?php endforeach; ?>
-</div>
-<div class="row g-3">
-    <div class="col-lg-6">
-        <div class="glass-panel p-3">
-            <h2 class="h6 text-uppercase">System recommendations</h2>
-            <ul class="small text-secondary ps-3 mb-0">
-                <li><?= (int) ($stats['missing_thumbnails'] ?? 0) ?> posts are missing thumbnails.</li>
-                <li><?= (int) ($stats['duplicates'] ?? 0) ?> potential duplicate canonical URLs detected.</li>
-                <li><?= (int) ($stats['report_spike_today'] ?? 0) ?> reports were created today.</li>
-                <li>Review stale categories and consolidate duplicate tags.</li>
-            </ul>
-        </div>
-    </div>
-    <div class="col-lg-6">
-        <div class="glass-panel p-3">
-            <h2 class="h6 text-uppercase">Stale categories (90+ days)</h2>
-            <ul class="small text-secondary ps-3 mb-0">
-                <?php foreach (($stats['stale_categories'] ?? []) as $row): ?>
-                    <li><?= Helpers::e($row['name']) ?> (last used: <?= Helpers::e((string) $row['last_used']) ?>)</li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
-    </div>
-</div>
-<div class="mt-3 d-flex gap-2">
-    <a class="btn btn-outline-light" href="/admin/moderation">Moderation Queue</a>
-    <a class="btn btn-outline-warning" href="/admin/reports">Reports</a>
-    <a class="btn btn-outline-success" href="/admin/users-badges">Users & Badges</a>
-    <a class="btn btn-outline-info" href="/admin/bookmarklet">Admin Bookmarklet</a>
-</div>
-<div class="row g-3 mt-1">
-    <div class="col-lg-6">
-        <div class="glass-panel p-3">
-            <h2 class="h6 text-uppercase">Manage taxonomy</h2>
-            <form method="post" action="/admin/categories" class="d-flex gap-2 mb-2">
-                <input type="hidden" name="_csrf" value="<?= Helpers::e($csrf) ?>">
-                <input type="text" class="form-control form-control-sm" name="name" placeholder="New category name" required>
-                <button class="btn btn-sm btn-outline-info" type="submit">Add category</button>
-            </form>
-            <form method="post" action="/admin/tags" class="d-flex gap-2">
-                <input type="hidden" name="_csrf" value="<?= Helpers::e($csrf) ?>">
-                <input type="text" class="form-control form-control-sm" name="name" placeholder="New tag name" required>
-                <button class="btn btn-sm btn-outline-info" type="submit">Add tag</button>
-            </form>
-            <div class="small text-secondary mt-3">Categories: <?= Helpers::e(implode(', ', array_map(static fn ($c) => (string) $c['name'], $stats['categories'] ?? []))) ?></div>
-        </div>
-    </div>
-    <div class="col-lg-6">
-        <div class="glass-panel p-3">
-            <h2 class="h6 text-uppercase">Manage posts</h2>
-            <div class="small vstack gap-2">
-                <?php foreach (($stats['manageable_posts'] ?? []) as $post): ?>
-                    <div class="d-flex justify-content-between gap-2">
-                        <span class="text-secondary">#<?= (int) $post['id'] ?> · <?= Helpers::e($post['title']) ?> · <?= Helpers::e($post['display_name']) ?></span>
-                        <span class="d-flex gap-1">
-                            <a class="btn btn-sm btn-outline-light" href="/admin/posts/<?= (int) $post['id'] ?>/edit">Edit</a>
-                            <form method="post" action="/admin/posts/<?= (int) $post['id'] ?>/delete">
-                                <input type="hidden" name="_csrf" value="<?= Helpers::e($csrf) ?>">
-                                <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
-                            </form>
-                        </span>
-                    </div>
-                <?php endforeach; ?>
+<div class="page-shell">
+    <section class="page-hero glass-panel">
+        <div class="page-hero-grid">
+            <div>
+                <span class="eyebrow">Admin Control</span>
+                <h1 class="page-title">Operational intelligence dashboard for moderation pressure, system anomalies, and response actions.</h1>
+                <p class="page-copy">This screen is the system brain: flagged content, spike detection, maintenance cues, and direct intervention controls in one cinematic control layer.</p>
+            </div>
+            <div class="page-meta">
+                <span class="chip chip-moderation">Moderator Access</span>
+                <span class="chip chip-warning">Live Queue</span>
+                <span class="chip chip-status">AI Review</span>
             </div>
         </div>
-    </div>
-</div>
-<div class="glass-panel p-3 mt-3">
-    <h2 class="h6 text-uppercase">AI moderation review</h2>
-    <div class="vstack gap-2 small">
-        <?php foreach (($stats['ai_flags'] ?? []) as $flag): ?>
-            <div class="d-flex flex-wrap justify-content-between gap-2 border-bottom border-secondary pb-2">
-                <span class="text-secondary">
-                    #<?= (int) $flag['id'] ?> · <?= Helpers::e($flag['target_type']) ?>:<?= (int) $flag['target_id'] ?>
-                    · risk <?= Helpers::e($flag['risk_level']) ?> · conf <?= Helpers::e((string) $flag['confidence']) ?>
-                    · <?= Helpers::e($flag['recommendation']) ?> · tags <?= Helpers::e((string) $flag['suggested_tags']) ?>
-                </span>
-                <?php if (($flag['review_status'] ?? 'pending') === 'pending'): ?>
-                    <form method="post" action="/admin/ai/<?= (int) $flag['id'] ?>/review" class="d-flex gap-1">
-                        <input type="hidden" name="_csrf" value="<?= Helpers::e($csrf) ?>">
-                        <button class="btn btn-sm btn-outline-success" type="submit" name="decision" value="accepted">Accept</button>
-                        <button class="btn btn-sm btn-outline-warning" type="submit" name="decision" value="overridden">Override</button>
-                        <button class="btn btn-sm btn-outline-danger" type="submit" name="decision" value="rejected">Reject</button>
-                    </form>
-                <?php else: ?>
-                    <span class="badge bg-secondary">Reviewed: <?= Helpers::e((string) ($flag['admin_decision'] ?? $flag['review_status'])) ?></span>
-                <?php endif; ?>
-            </div>
+    </section>
+
+    <section class="metric-grid">
+        <?php foreach ([
+            ['label' => 'Reported Posts', 'value' => $stats['reported_posts'] ?? 0, 'foot' => 'Posts in need of operator review.'],
+            ['label' => 'Reported Comments', 'value' => $stats['reported_comments'] ?? 0, 'foot' => 'Comment-level moderation pressure.'],
+            ['label' => 'AI Queue', 'value' => $stats['ai_queue'] ?? 0, 'foot' => 'Pending machine triage decisions.'],
+            ['label' => 'Duplicates', 'value' => $stats['duplicates'] ?? 0, 'foot' => 'Potential source collisions.'],
+            ['label' => 'Missing Thumbnails', 'value' => $stats['missing_thumbnails'] ?? 0, 'foot' => 'Posts lacking visual confirmation.'],
+            ['label' => 'Report Spikes', 'value' => $stats['report_spike_today'] ?? 0, 'foot' => 'Today\'s volume increase.'],
+        ] as $metric): ?>
+            <article class="intel-stat-card">
+                <div class="intel-stat-label"><?= Helpers::e($metric['label']) ?></div>
+                <div class="intel-stat-value"><?= (int) $metric['value'] ?></div>
+                <div class="intel-stat-foot"><?= Helpers::e($metric['foot']) ?></div>
+            </article>
         <?php endforeach; ?>
+    </section>
+
+    <div class="row g-3">
+        <div class="col-12 col-xxl-7">
+            <section class="glass-panel section-card h-100">
+                <div class="intel-panel-header">
+                    <div>
+                        <div class="panel-kicker">Recommendations</div>
+                        <h2 class="panel-title">System-generated intervention queue</h2>
+                        <p class="panel-copy">Action cards for taxonomy cleanup, media repair, report surges, and duplicate detection.</p>
+                    </div>
+                    <div class="page-actions">
+                        <a class="btn btn-outline-light btn-sm" href="/admin/moderation">Moderation Queue</a>
+                        <a class="btn btn-outline-warning btn-sm" href="/admin/reports">Reports</a>
+                    </div>
+                </div>
+
+                <div class="intel-alert-list">
+                    <article class="intel-alert-card">
+                        <span class="alert-severity severity-medium"></span>
+                        <div class="flex-grow-1">
+                            <div class="intel-feed-meta">SYSTEM MAINTENANCE</div>
+                            <div class="intel-feed-body"><strong><?= (int) ($stats['missing_thumbnails'] ?? 0) ?> posts missing thumbnails</strong></div>
+                            <div class="panel-copy mt-1">Repair missing preview assets to restore fast visual scanning in feeds and queues.</div>
+                        </div>
+                    </article>
+                    <article class="intel-alert-card">
+                        <span class="alert-severity severity-high"></span>
+                        <div class="flex-grow-1">
+                            <div class="intel-feed-meta">DUPLICATE DETECTION</div>
+                            <div class="intel-feed-body"><strong><?= (int) ($stats['duplicates'] ?? 0) ?> possible duplicate URLs detected</strong></div>
+                            <div class="panel-copy mt-1">Merge or suppress duplicate signals before they distort engagement and moderation data.</div>
+                        </div>
+                    </article>
+                    <article class="intel-alert-card">
+                        <span class="alert-severity severity-low"></span>
+                        <div class="flex-grow-1">
+                            <div class="intel-feed-meta">REPORT TREND</div>
+                            <div class="intel-feed-body"><strong>Report volume increased by <?= (int) ($stats['report_spike_today'] ?? 0) ?> today</strong></div>
+                            <div class="panel-copy mt-1">A sudden jump usually means one source, tag, or user cluster needs immediate inspection.</div>
+                        </div>
+                    </article>
+                </div>
+            </section>
+        </div>
+
+        <div class="col-12 col-xxl-5">
+            <section class="glass-panel section-card h-100">
+                <div class="intel-panel-header">
+                    <div>
+                        <div class="panel-kicker">Stale Taxonomy</div>
+                        <h2 class="panel-title">Dormant categories</h2>
+                        <p class="panel-copy">Weak taxonomy branches are easy to miss until retrieval quality collapses.</p>
+                    </div>
+                </div>
+
+                <div class="intel-list-stack">
+                    <?php foreach (($stats['stale_categories'] ?? []) as $row): ?>
+                        <article class="intel-list-item">
+                            <div class="intel-list-meta">Last used <?= Helpers::e((string) $row['last_used']) ?></div>
+                            <div class="intel-list-body"><strong><?= Helpers::e($row['name']) ?></strong> should be archived, merged, or reactivated.</div>
+                        </article>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+        </div>
+
+        <div class="col-12 col-xl-6">
+            <section class="glass-panel section-card">
+                <div class="intel-panel-header">
+                    <div>
+                        <div class="panel-kicker">Moderation Actions</div>
+                        <h2 class="panel-title">Rapid response controls</h2>
+                        <p class="panel-copy">Direct links to the highest-friction intervention paths.</p>
+                    </div>
+                </div>
+
+                <div class="page-actions mb-3">
+                    <a class="btn btn-outline-light btn-sm" href="/admin/moderation">Open queue</a>
+                    <a class="btn btn-outline-warning btn-sm" href="/admin/reports">Review reports</a>
+                    <a class="btn btn-outline-success btn-sm" href="/admin/users-badges">Users & Badges</a>
+                    <a class="btn btn-outline-info btn-sm" href="/admin/bookmarklet">Bookmarklet</a>
+                </div>
+
+                <div class="intel-form-panel">
+                    <div class="panel-kicker">Manage Taxonomy</div>
+                    <div class="row g-3 mt-1">
+                        <div class="col-12">
+                            <form method="post" action="/admin/categories" class="row g-2">
+                                <input type="hidden" name="_csrf" value="<?= Helpers::e($csrf) ?>">
+                                <div class="col-md-8">
+                                    <input type="text" class="form-control form-control-sm" name="name" placeholder="New category name" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <button class="btn btn-outline-info btn-sm w-100" type="submit">Add Category</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-12">
+                            <form method="post" action="/admin/tags" class="row g-2">
+                                <input type="hidden" name="_csrf" value="<?= Helpers::e($csrf) ?>">
+                                <div class="col-md-8">
+                                    <input type="text" class="form-control form-control-sm" name="name" placeholder="New tag name" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <button class="btn btn-outline-info btn-sm w-100" type="submit">Add Tag</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="panel-copy mt-3">Current categories: <?= Helpers::e(implode(', ', array_map(static fn ($c) => (string) $c['name'], $stats['categories'] ?? []))) ?></div>
+                </div>
+            </section>
+        </div>
+
+        <div class="col-12 col-xl-6">
+            <section class="glass-panel section-card">
+                <div class="intel-panel-header">
+                    <div>
+                        <div class="panel-kicker">Manage Posts</div>
+                        <h2 class="panel-title">Recent editable records</h2>
+                        <p class="panel-copy">A compact edit rail for broken titles, wrong categories, and bad source entries.</p>
+                    </div>
+                </div>
+
+                <div class="intel-list-stack">
+                    <?php foreach (($stats['manageable_posts'] ?? []) as $post): ?>
+                        <article class="intel-list-item">
+                            <div class="d-flex justify-content-between gap-3 flex-wrap">
+                                <div>
+                                    <div class="intel-list-meta">Post #<?= (int) $post['id'] ?> by <?= Helpers::e($post['display_name']) ?></div>
+                                    <div class="intel-list-body"><strong><?= Helpers::e($post['title']) ?></strong></div>
+                                </div>
+                                <div class="page-actions">
+                                    <a class="btn btn-outline-light btn-sm" href="/admin/posts/<?= (int) $post['id'] ?>/edit">Edit</a>
+                                    <form method="post" action="/admin/posts/<?= (int) $post['id'] ?>/delete">
+                                        <input type="hidden" name="_csrf" value="<?= Helpers::e($csrf) ?>">
+                                        <button class="btn btn-outline-danger btn-sm" type="submit">Delete</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </article>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+        </div>
     </div>
+
+    <section class="glass-panel section-card">
+        <div class="intel-panel-header">
+            <div>
+                <div class="panel-kicker">AI Moderation</div>
+                <h2 class="panel-title">Flag review console</h2>
+                <p class="panel-copy">Future-proofed for risk scoring, evidence expansion, and operator overrides.</p>
+            </div>
+        </div>
+
+        <div class="moderation-grid">
+            <div class="evidence-list">
+                <?php foreach (($stats['ai_flags'] ?? []) as $flag): ?>
+                    <article class="intel-list-item">
+                        <div class="d-flex justify-content-between gap-3 flex-wrap">
+                            <div>
+                                <div class="intel-list-meta">Flag #<?= (int) $flag['id'] ?> / <?= Helpers::e($flag['target_type']) ?> <?= (int) $flag['target_id'] ?></div>
+                                <div class="intel-list-body">
+                                    <strong><?= Helpers::e($flag['recommendation']) ?></strong><br>
+                                    Risk <?= Helpers::e($flag['risk_level']) ?>, confidence <?= Helpers::e((string) $flag['confidence']) ?>, tags <?= Helpers::e((string) $flag['suggested_tags']) ?>
+                                </div>
+                            </div>
+                            <div class="page-actions">
+                                <?php if (($flag['review_status'] ?? 'pending') === 'pending'): ?>
+                                    <form method="post" action="/admin/ai/<?= (int) $flag['id'] ?>/review">
+                                        <input type="hidden" name="_csrf" value="<?= Helpers::e($csrf) ?>">
+                                        <button class="btn btn-outline-success btn-sm" type="submit" name="decision" value="accepted">Accept</button>
+                                    </form>
+                                    <form method="post" action="/admin/ai/<?= (int) $flag['id'] ?>/review">
+                                        <input type="hidden" name="_csrf" value="<?= Helpers::e($csrf) ?>">
+                                        <button class="btn btn-outline-warning btn-sm" type="submit" name="decision" value="overridden">Override</button>
+                                    </form>
+                                    <form method="post" action="/admin/ai/<?= (int) $flag['id'] ?>/review">
+                                        <input type="hidden" name="_csrf" value="<?= Helpers::e($csrf) ?>">
+                                        <button class="btn btn-outline-danger btn-sm" type="submit" name="decision" value="rejected">Reject</button>
+                                    </form>
+                                <?php else: ?>
+                                    <span class="chip chip-neutral">Reviewed: <?= Helpers::e((string) ($flag['admin_decision'] ?? $flag['review_status'])) ?></span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </article>
+                <?php endforeach; ?>
+            </div>
+
+            <div class="glass-subpanel section-card">
+                <div class="panel-kicker">Timeline View</div>
+                <h3 class="panel-title">Operational sequence</h3>
+                <div class="timeline-list mt-3">
+                    <div class="timeline-item">
+                        <div class="intel-list-meta">Detect</div>
+                        <div class="panel-copy">AI flags new content and assigns a risk score plus recommended tags.</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="intel-list-meta">Correlate</div>
+                        <div class="panel-copy">Operators cross-check queue volume, duplicate clusters, and report spikes.</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="intel-list-meta">Intervene</div>
+                        <div class="panel-copy">Accept, override, reject, hide, or retag from the same control layer.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 </div>

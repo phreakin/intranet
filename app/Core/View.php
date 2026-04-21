@@ -16,7 +16,7 @@ final class View
         }
 
         extract($data, EXTR_SKIP);
-        $appName = Config::get('app', 'name', 'Intranet Prompt');
+        $appName = Config::get('app', 'name', 'Intranet');
         $currentUser = Auth::user();
         $features = Config::get('features');
         require dirname(__DIR__, 2) . '/resources/views/layouts/app.php';

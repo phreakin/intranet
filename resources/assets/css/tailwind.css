@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-intranet-bg text-intranet-text antialiased;
+  }
+}
+
+@layer components {
+  .tw-glass-panel {
+    @apply rounded-glass border border-white/10 bg-intranet-panel/80 shadow-glass backdrop-blur-glass;
+  }
+
+  .tw-chip {
+    @apply inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-intranet-text;
+  }
+
+  .tw-section-title {
+    @apply text-sm font-semibold uppercase tracking-[0.18em] text-intranet-dim;
+  }
+}

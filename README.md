@@ -25,7 +25,10 @@ A modular private home intranet intelligence system for a single Linux server (P
 - `app/Core` - config, router, DB, auth, CSRF, view helpers
 - `app/Modules/**` - modular domain folders (Authentication, Users, Posts, Moderation, AI, Admin, etc.)
 - `resources/views/**` - reusable SSR layouts and module pages
+- `resources/assets/css/tailwind.css` - Tailwind entry stylesheet
+- `tailwind.config.js` - Tailwind scan + theme config
 - `public/assets/css/theme.css` - premium dark glass cinematic theme
+- `public/assets/css/tailwind.css` - compiled Tailwind output
 - `public/assets/js/app.js` - lightweight jQuery interactions
 - `database/migrations/001_initial_schema.sql` - complete schema
 - `database/seeds/001_seed.sql` - roles, permissions, badges, admin seed
@@ -47,7 +50,16 @@ A modular private home intranet intelligence system for a single Linux server (P
    ```bash
    php -S 127.0.0.1:8080 -t public
    ```
-5. Default admin seed account:
+5. Build Tailwind CSS:
+   ```bash
+   npm install
+   npm run build:css
+   ```
+   For active UI work:
+   ```bash
+   npm run watch:css
+   ```
+6. Default admin seed account:
    - email: `admin@local.intranet`
    - password: `password`
 
