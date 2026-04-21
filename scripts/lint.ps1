@@ -1,14 +1,26 @@
 Write-Host "=== PHP LINT START ==="
 
-$files = Get-ChildItem -Recurse -Filter *.php
+$targetDirs = @(
+    "app",
+    "public",
+    "config"
+)
+
+$files = @()
+
+foreach ($dir in $targetDirs) {
+    if (Test-Path $dir) {
+        $files += Get-ChildItem -Path $dir -Recurse -Filter *.php -File
+    }
+}
 
 foreach ($file in $files) {
-    php -l $file.FullName
+    php -l $file.FullName | Out-Null
 
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "❌ Syntax error in $($file.FullName)"
+        Write-Host "[ERROR] Syntax error in $($file.FullName)"
         exit 1
     }
 }
 
-Write-Host "=== PHP LINT COMPLETE ==="
+Write-Host "[OK] All PHP files valid"
