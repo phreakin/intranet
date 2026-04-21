@@ -1,3 +1,53 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    body {
+        @apply bg-bg-950 text-text-100 antialiased;
+        background-image: theme('backgroundImage.radial-intel');
+    }
+}
+
+@layer components {
+
+    .glass-panel {
+        @apply bg-white/5 backdrop-blur-md border border-white/10 rounded-xl shadow-panel;
+    }
+
+    .panel-title {
+        @apply text-sm font-semibold text-white;
+    }
+
+    .panel-meta {
+        @apply text-xs text-text-400;
+    }
+
+    .metric-tile {
+        @apply glass-panel p-4 flex flex-col gap-1;
+    }
+
+    .metric-value {
+        @apply text-xl font-bold text-accent-cyan;
+    }
+
+    .status-chip {
+        @apply px-2 py-1 text-xs rounded-full bg-white/10 text-text-200;
+    }
+
+    .control-table {
+        @apply w-full text-sm text-left text-text-300;
+    }
+
+    .sidebar-link {
+        @apply flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 transition;
+    }
+
+    .topbar {
+        @apply flex items-center justify-between px-4 py-2 border-b border-white/10;
+    }
+
+    .search-input {
+        @apply bg-white/5 border border-white/10 rounded px-3 py-2 text-sm w-full;
+    }
+}
