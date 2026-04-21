@@ -4,9 +4,12 @@
   "private": true,
   "description": "A modular private home intranet intelligence system for a single Linux server (PHP 8.2+, MySQL 8+, jQuery, Bootstrap 5 SSR-first).",
   "scripts": {
-    "npm:install": "npm install",
-    "npm:update": "npm update",
-    "npm:latest": "npm update",
+    "yarn:install": "yarn install --latest",
+    "yarn:update": "yarn update --latest",
+    "yarn:latest": "yarn update --latest && yarn install --latest",
+    "yarn:audit": "yarn audit",
+    "yarn:audit:fix": "yarn audit fix",
+    "yarn:audit:check": "yarn audit --json | yarn audit:check",
     "tailwindcss:watch": "tailwindcss -i ./resources/assets/css/tailwind.css -o ./public/assets/css/tailwind.css --watch",
     "build:css": "tailwindcss -i ./resources/assets/css/tailwind.css -o ./public/assets/css/tailwind.css --minify",
     "watch:css": "tailwindcss -i ./resources/assets/css/tailwind.css -o ./public/assets/css/tailwind.css --watch",
@@ -62,5 +65,10 @@
     "stylelint-config-tailwindcss": "^1.0.1",
     "stylelint-order": "^7.0.1",
     "tailwindcss": "^3.4.17"
+  },
+  "main": "eslint.config.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
   }
 }
