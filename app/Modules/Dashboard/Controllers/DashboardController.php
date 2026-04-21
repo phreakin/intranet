@@ -13,9 +13,9 @@ final class DashboardController
 {
     private DashboardWidgetService $widgets;
 
-    public function __construct()
+    public function __construct(?DashboardWidgetService $widgets = null)
     {
-        $this->widgets = new DashboardWidgetService(Database::connection());
+        $this->widgets = $widgets ?? new DashboardWidgetService(Database::connection());
     }
 
     /**
@@ -40,26 +40,20 @@ final class DashboardController
      * AJAX widget loader
      * Used by dashboard.js
      */
-    public function widget(): void
+    public function widget(?string $widget = null): void
     {
-        $widget = $_GET['widget'] ?? '';
+        $widgetName = $widget ?? (string) ($_GET['widget'] ?? '');
 
-        $allowedWidgets = [
-            'quick-stats',
-            'newest-posts',
-            'trending-posts',
-            'activity-feed',
-            'system-alerts',
-        ];
-
-        if (!in_array($widget, $allowedWidgets, true)) {
+        if (!$this->widgets->isAllowedWidget($widgetName)) {
             http_response_code(404);
             echo 'Invalid widget';
             return;
         }
 
         // Get widget data
-        $data = $this->widgets->getWidgetData($widget);
+        $data = $this->widgets->getWidgetData($widgetName);
+        $definition = $this->widgets->getWidgetDefinition($widgetName);
+        $template = (string) ($definition['template'] ?? str_replace('-', '_', $widgetName));
 
         // Extract variables safely
         extract($data, EXTR_SKIP);
@@ -67,7 +61,7 @@ final class DashboardController
         // IMPORTANT: match your current view structure
         $viewPath = dirname(__DIR__, 4)
             . '/resources/views/dashboard/widgets/'
-            . $widget . '.php';
+            . $template . '.php';
 
         if (!file_exists($viewPath)) {
             http_response_code(500);
