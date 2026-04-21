@@ -1,5 +1,3 @@
-. (Join-Path $PSScriptRoot "common.ps1")
-
 param(
     [int]$IntervalSeconds = 10,
     [int]$CooldownSeconds = 30,
@@ -7,6 +5,8 @@ param(
     [switch]$SkipPull,
     [switch]$SkipPush
 )
+
+. (Join-Path $PSScriptRoot "common.ps1")
 
 $ErrorActionPreference = "Stop"
 Enter-RepoRoot

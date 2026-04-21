@@ -1,9 +1,9 @@
-. (Join-Path $PSScriptRoot "common.ps1")
-
 param(
     [switch]$SkipComposer,
     [switch]$SkipNpm
 )
+
+. (Join-Path $PSScriptRoot "common.ps1")
 
 $ErrorActionPreference = "Stop"
 Enter-RepoRoot

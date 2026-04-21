@@ -1,9 +1,9 @@
-. (Join-Path $PSScriptRoot "common.ps1")
-
 param(
     [switch]$IncludeSeeds,
     [switch]$SeedsOnly
 )
+
+. (Join-Path $PSScriptRoot "common.ps1")
 
 $ErrorActionPreference = "Stop"
 Enter-RepoRoot

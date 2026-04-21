@@ -1,5 +1,3 @@
-. (Join-Path $PSScriptRoot "common.ps1")
-
 param(
     [string]$Branch = "",
     [string]$Remote = "origin",
@@ -7,6 +5,8 @@ param(
     [switch]$SkipNpm,
     [switch]$BuildAssets
 )
+
+. (Join-Path $PSScriptRoot "common.ps1")
 
 $ErrorActionPreference = "Stop"
 Enter-RepoRoot
