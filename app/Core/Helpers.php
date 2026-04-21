@@ -58,7 +58,31 @@ final class Helpers
     }
 
 
-    
+    private static function loadSvgSet(string $relativePath): array
+    {
+        $dir = $_SERVER['DOCUMENT_ROOT'] . $relativePath;
+
+        if (!is_dir($dir)) {
+            return [];
+        }
+
+        $svgs = [];
+
+        foreach (scandir($dir) as $file) {
+            if ($file[0] === '.' || pathinfo($file, PATHINFO_EXTENSION) !== 'svg') {
+                continue;
+            }
+
+            // Normalize key: Google.svg → google
+            $key = strtolower(pathinfo($file, PATHINFO_FILENAME));
+
+            // Public URL
+            $svgs[$key] = $relativePath . $file;
+        }
+
+        return $svgs;
+    }
+
 
 
 

@@ -43,7 +43,7 @@
                     <a href="/auth/oauth/google"
                        class="btn d-flex align-items-center justify-content-center gap-2 fw-semibold"
                        style="background:#DB4437; color:#fff;">
-                        <img src="<?= Helpers::svgs()['google'] ?>" width="32" height="32" alt="Google" style="filter: drop-shadow(0 0 1px rgba(0,0,0,0.2)); background-color:#fff; border-radius: 50%; padding: 4px;">
+                        <img src="<?= Helpers::svgsColor()['google'] ?>" width="32">
                         Continue with Google
                     </a>
                 <?php endif; ?>
@@ -52,7 +52,7 @@
                     <a href="/auth/oauth/github"
                        class="btn d-flex align-items-center justify-content-center gap-2 fw-semibold"
                        style="background:#000; color:#fff;">
-                        <img src="<?= Helpers::svgs()['github'] ?>" width="18" height="18" alt="">
+                        <img src="<?= Helpers::svgsColor()['github'] ?>" width="32">
                         Continue with GitHub
                     </a>
                 <?php endif; ?>
@@ -61,7 +61,7 @@
                     <a href="/auth/oauth/reddit"
                        class="btn d-flex align-items-center justify-content-center gap-2 fw-semibold"
                        style="background:#FF4500; color:#fff;">
-                        <img src="<?= Helpers::svgs()['reddit'] ?>" width="18" height="18" alt="">
+                        <img src="<?= Helpers::svgsColor()['reddit'] ?>" width="32">
                         Continue with Reddit
                     </a>
                 <?php endif; ?>
