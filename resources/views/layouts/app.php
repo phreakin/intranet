@@ -53,9 +53,9 @@ $isActive = static function (string $currentPath, array $matchers): bool {
         <div class="d-flex align-items-center justify-content-between gap-2">
             <a class="intel-brand text-decoration-none" href="/">
                 <span class="intel-brand-mark">IQ</span>
-                <span class="intel-brand-copy">
+                <span class="intel-brand-copy d-flex flex-column">
                     <span class="intel-brand-title"><?= Helpers::e($appName) ?></span>
-                    <span class="intel-brand-subtitle">Forensic intranet grid</span>
+                    <span class="intel-brand-subtitle"><?= Helpers::e('Forensic intranet grid') ?></span>
                 </span>
             </a>
             <button class="intel-sidebar-toggle" type="button" data-sidebar-toggle aria-label="Toggle sidebar">||</button>
