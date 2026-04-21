@@ -1,0 +1,4 @@
+node_modules/
+vendor/
+public/assets/css/tailwind.css
+public/assets/css/app.tailwind.css
