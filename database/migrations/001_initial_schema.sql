@@ -31,8 +31,9 @@ CREATE TABLE IF NOT EXISTS users (
     avatar_url VARCHAR(500) NULL,
     bio TEXT NULL,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
-    created_at DATETIME NOT NULL,
-    updated_at DATETIME NOT NULL
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_users_active (is_active)
 );
 
 CREATE TABLE IF NOT EXISTS user_roles (
@@ -48,7 +49,7 @@ CREATE TABLE IF NOT EXISTS oauth_accounts (
     user_id BIGINT UNSIGNED NOT NULL,
     provider VARCHAR(32) NOT NULL,
     provider_user_id VARCHAR(190) NOT NULL,
-    created_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_oauth_provider_user (provider, provider_user_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -57,7 +58,7 @@ CREATE TABLE IF NOT EXISTS badges (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
     description VARCHAR(255) NULL,
-    created_at DATETIME NOT NULL
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS user_badges (
@@ -65,24 +66,26 @@ CREATE TABLE IF NOT EXISTS user_badges (
     user_id BIGINT UNSIGNED NOT NULL,
     badge_id BIGINT UNSIGNED NOT NULL,
     assigned_by BIGINT UNSIGNED NULL,
-    created_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_user_badge (user_id, badge_id),
+    INDEX idx_user_badges_assigned_by (assigned_by),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (badge_id) REFERENCES badges(id) ON DELETE CASCADE
+    FOREIGN KEY (badge_id) REFERENCES badges(id) ON DELETE CASCADE,
+    FOREIGN KEY (assigned_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS categories (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(120) NOT NULL UNIQUE,
     slug VARCHAR(150) NOT NULL UNIQUE,
-    created_at DATETIME NOT NULL
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS tags (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(120) NOT NULL,
+    name VARCHAR(120) NOT NULL UNIQUE,
     slug VARCHAR(150) NOT NULL UNIQUE,
-    created_at DATETIME NOT NULL
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS posts (
@@ -117,7 +120,8 @@ CREATE TABLE IF NOT EXISTS post_status_tags (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     post_id BIGINT UNSIGNED NOT NULL,
     status_tag VARCHAR(64) NOT NULL,
-    created_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_post_status_tag (post_id, status_tag),
     INDEX idx_post_status_tag (post_id, status_tag),
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
 );
@@ -137,8 +141,8 @@ CREATE TABLE IF NOT EXISTS comments (
     body TEXT NOT NULL,
     moderation_state VARCHAR(40) NOT NULL DEFAULT 'visible',
     is_hidden TINYINT(1) NOT NULL DEFAULT 0,
-    created_at DATETIME NOT NULL,
-    updated_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_comments_post (post_id),
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -146,7 +150,8 @@ CREATE TABLE IF NOT EXISTS comments (
 
 CREATE TABLE IF NOT EXISTS comment_tags (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(60) NOT NULL UNIQUE
+    name VARCHAR(60) NOT NULL UNIQUE,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS comment_tag_map (
@@ -162,7 +167,7 @@ CREATE TABLE IF NOT EXISTS post_votes (
     post_id BIGINT UNSIGNED NOT NULL,
     user_id BIGINT UNSIGNED NOT NULL,
     vote TINYINT NOT NULL,
-    created_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_post_vote (post_id, user_id),
     INDEX idx_post_vote (post_id, vote),
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
@@ -173,7 +178,7 @@ CREATE TABLE IF NOT EXISTS post_favorites (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     post_id BIGINT UNSIGNED NOT NULL,
     user_id BIGINT UNSIGNED NOT NULL,
-    created_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_post_favorite (post_id, user_id),
     INDEX idx_favorites_user (user_id),
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
@@ -184,7 +189,7 @@ CREATE TABLE IF NOT EXISTS post_bookmarks (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     post_id BIGINT UNSIGNED NOT NULL,
     user_id BIGINT UNSIGNED NOT NULL,
-    created_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_post_bookmark (post_id, user_id),
     INDEX idx_bookmarks_user (user_id),
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
@@ -197,7 +202,7 @@ CREATE TABLE IF NOT EXISTS post_reports (
     user_id BIGINT UNSIGNED NOT NULL,
     reason VARCHAR(255) NOT NULL,
     status VARCHAR(40) NOT NULL DEFAULT 'open',
-    created_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_post_reports_status (status, created_at),
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -209,7 +214,7 @@ CREATE TABLE IF NOT EXISTS comment_reports (
     user_id BIGINT UNSIGNED NOT NULL,
     reason VARCHAR(255) NOT NULL,
     status VARCHAR(40) NOT NULL DEFAULT 'open',
-    created_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_comment_reports_status (status, created_at),
     FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -222,7 +227,7 @@ CREATE TABLE IF NOT EXISTS moderation_logs (
     target_id BIGINT UNSIGNED NOT NULL,
     action VARCHAR(60) NOT NULL,
     detail VARCHAR(255) NULL,
-    created_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_moderation_target (target_type, target_id),
     FOREIGN KEY (actor_user_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -247,6 +252,7 @@ CREATE TABLE IF NOT EXISTS ai_moderation_logs (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX admin_reviewed_by (admin_reviewed_by),
+    INDEX idx_ai_target (target_type, target_id),
     INDEX idx_ai_review (review_status, created_at),
     FOREIGN KEY (admin_reviewed_by) REFERENCES users(id) ON DELETE SET NULL
 );
