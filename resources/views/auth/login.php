@@ -43,7 +43,7 @@
                     <a href="/auth/oauth/google"
                        class="btn d-flex align-items-center justify-content-center gap-2 fw-semibold"
                        style="background:#DB4437; color:#fff;">
-                        <img src="<?= Helpers::svgsColor()['google'] ?>" width="32">
+                        <img src="<?= Helpers::svgsColor()['google'] ?>" width="32" alt="Google">
                         Continue with Google
                     </a>
                 <?php endif; ?>
@@ -52,7 +52,7 @@
                     <a href="/auth/oauth/github"
                        class="btn d-flex align-items-center justify-content-center gap-2 fw-semibold"
                        style="background:#000; color:#fff;">
-                        <img src="<?= Helpers::svgsColor()['github'] ?>" width="32">
+                        <img src="<?= Helpers::svgsColor()['github'] ?>" width="32" alt="GitHub">
                         Continue with GitHub
                     </a>
                 <?php endif; ?>
@@ -61,7 +61,7 @@
                     <a href="/auth/oauth/reddit"
                        class="btn d-flex align-items-center justify-content-center gap-2 fw-semibold"
                        style="background:#FF4500; color:#fff;">
-                        <img src="<?= Helpers::svgsColor()['reddit'] ?>" width="32">
+                        <img src="<?= Helpers::svgsColor()['reddit'] ?>" width="32" alt="Reddit">
                         Continue with Reddit
                     </a>
                 <?php endif; ?>
