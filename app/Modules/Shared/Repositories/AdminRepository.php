@@ -13,11 +13,11 @@ final class AdminRepository
         $db = Database::connection();
 
         return [
-            'reported_posts' => (int) $db->query('SELECT COUNT(*) FROM post_reports WHERE status = "open"')->fetchColumn(),
-            'reported_comments' => (int) $db->query('SELECT COUNT(*) FROM comment_reports WHERE status = "open"')->fetchColumn(),
-            'ai_queue' => (int) $db->query('SELECT COUNT(*) FROM ai_moderation_logs WHERE review_status = "pending"')->fetchColumn(),
-            'missing_thumbnails' => (int) $db->query('SELECT COUNT(*) FROM posts WHERE thumbnail_url IS NULL OR thumbnail_url = ""')->fetchColumn(),
-            'missing_descriptions' => (int) $db->query('SELECT COUNT(*) FROM posts WHERE description IS NULL OR description = ""')->fetchColumn(),
+            'reported_posts' => (int) $db->query("SELECT COUNT(*) FROM post_reports WHERE status = 'open'")->fetchColumn(),
+            'reported_comments' => (int) $db->query("SELECT COUNT(*) FROM comment_reports WHERE status = 'open'")->fetchColumn(),
+            'ai_queue' => (int) $db->query("SELECT COUNT(*) FROM ai_moderation_logs WHERE review_status = 'pending'")->fetchColumn(),
+            'missing_thumbnails' => (int) $db->query("SELECT COUNT(*) FROM posts WHERE thumbnail_url IS NULL OR thumbnail_url = ''")->fetchColumn(),
+            'missing_descriptions' => (int) $db->query("SELECT COUNT(*) FROM posts WHERE description IS NULL OR description = ''")->fetchColumn(),
             'duplicates' => (int) $db->query('SELECT COUNT(*) FROM (SELECT canonical_url FROM posts GROUP BY canonical_url HAVING COUNT(*) > 1) d')->fetchColumn(),
             'report_spike_today' => (int) $db->query('SELECT COUNT(*) FROM post_reports WHERE DATE(created_at) = CURRENT_DATE()')->fetchColumn(),
             'stale_categories' => $db->query('SELECT c.name, MAX(p.created_at) AS last_used
@@ -43,8 +43,8 @@ final class AdminRepository
     {
         $db = Database::connection();
         return [
-            'post_reports' => $db->query('SELECT pr.*, p.title FROM post_reports pr JOIN posts p ON p.id = pr.post_id WHERE pr.status = "open" ORDER BY pr.created_at DESC LIMIT 50')->fetchAll(),
-            'comment_reports' => $db->query('SELECT cr.*, c.body FROM comment_reports cr JOIN comments c ON c.id = cr.comment_id WHERE cr.status = "open" ORDER BY cr.created_at DESC LIMIT 50')->fetchAll(),
+            'post_reports' => $db->query("SELECT pr.*, p.title FROM post_reports pr JOIN posts p ON p.id = pr.post_id WHERE pr.status = 'open' ORDER BY pr.created_at DESC LIMIT 50")->fetchAll(),
+            'comment_reports' => $db->query("SELECT cr.*, c.body FROM comment_reports cr JOIN comments c ON c.id = cr.comment_id WHERE cr.status = 'open' ORDER BY cr.created_at DESC LIMIT 50")->fetchAll(),
             'comments' => $db->query('SELECT c.*, p.title AS post_title, u.display_name FROM comments c JOIN posts p ON p.id = c.post_id JOIN users u ON u.id = c.user_id ORDER BY c.created_at DESC LIMIT 50')->fetchAll(),
         ];
     }

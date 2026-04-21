@@ -203,7 +203,7 @@ final class PostRepository
         Database::connection()->prepare('INSERT INTO post_reports (post_id, user_id, reason, status, created_at)
             VALUES (:post_id, :user_id, :reason, :status, NOW())')
             ->execute(['post_id' => $postId, 'user_id' => $userId, 'reason' => $reason, 'status' => 'open']);
-        Database::connection()->prepare('UPDATE posts SET report_count = (SELECT COUNT(*) FROM post_reports WHERE post_id = :id AND status = \"open\") WHERE id = :id')
+        Database::connection()->prepare("UPDATE posts SET report_count = (SELECT COUNT(*) FROM post_reports WHERE post_id = :id AND status = 'open') WHERE id = :id")
             ->execute(['id' => $postId]);
     }
 
