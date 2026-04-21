@@ -4,6 +4,9 @@
   "private": true,
   "description": "A modular private home intranet intelligence system for a single Linux server (PHP 8.2+, MySQL 8+, jQuery, Bootstrap 5 SSR-first).",
   "scripts": {
+    "npm:install": "npm install --latest",
+    "npm:update": "npm update",
+    "npm:latest": "npm update --latest",
     "build:css": "tailwindcss -i ./resources/assets/css/tailwind.css -o ./public/assets/css/tailwind.css --minify",
     "watch:css": "tailwindcss -i ./resources/assets/css/tailwind.css -o ./public/assets/css/tailwind.css --watch",
     "build:legacy-css": "tailwindcss -i ./resources/assets/css/app.css -o ./public/assets/css/app.tailwind.css --minify",
@@ -41,6 +44,11 @@
     "url": "https://github.com/phreakin/intranet/issues"
   },
   "homepage": "https://github.com/phreakin/intranet#readme",
+  "dependencies": {
+    "@loganmarchione/homelab-svg-assets": "*",
+    "thesvg": "*",
+    "@zendeskgarden/svg-icons": "*"
+  },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
     "autoprefixer": "^10.4.20",
@@ -52,8 +60,6 @@
     "stylelint-config-standard": "^38.0.0",
     "stylelint-config-tailwindcss": "^1.0.1",
     "stylelint-order": "^7.0.1",
-    "tailwindcss": "^3.4.17",
-    "thesvg": "^2.1.4",
-    "@zendeskgarden/svg-icons": "^8.4.0"
+    "tailwindcss": "^3.4.17"
   }
 }
