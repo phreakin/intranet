@@ -16,4 +16,33 @@ final class Helpers
         header('Location: ' . $path);
         exit;
     }
+
+    public static function svgs(): array
+    {
+        $dir = $_SERVER['DOCUMENT_ROOT'] . '/assets/svg/icons/color/';
+
+        if (!is_dir($dir)) {
+            return [];
+        }
+
+        $svgs = [];
+
+        foreach (scandir($dir) as $file) {
+            if ($file[0] === '.' || pathinfo($file, PATHINFO_EXTENSION) !== 'svg') {
+                continue;
+            }
+
+            // Normalize key: Google.svg → google
+            $key = strtolower(pathinfo($file, PATHINFO_FILENAME));
+
+            // Public URL
+            $svgs[$key] = '/assets/svg/icons/color/' . $file;
+        }
+
+        return $svgs;
+    }
+
+
+
+
 }
