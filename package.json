@@ -7,7 +7,7 @@
     "npm:install": "npm install",
     "npm:update": "npm update",
     "npm:latest": "npm update",
-    "tailwindcss:update": "npm update tailwindcss"
+    "tailwindcss:watch": "tailwindcss -i ./resources/assets/css/tailwind.css -o ./public/assets/css/tailwind.css --watch",
     "build:css": "tailwindcss -i ./resources/assets/css/tailwind.css -o ./public/assets/css/tailwind.css --minify",
     "watch:css": "tailwindcss -i ./resources/assets/css/tailwind.css -o ./public/assets/css/tailwind.css --watch",
     "build:legacy-css": "tailwindcss -i ./resources/assets/css/app.css -o ./public/assets/css/app.tailwind.css --minify",
