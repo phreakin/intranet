@@ -1,38 +1,59 @@
 Write-Host "=== VALIDATING INTRANET ==="
 
-$paths = @(
-    "../app/Core",
-    "../app/Modules",
-    "../config",
-    "../public/index.php",
-    "../resources/views",
-    "../resources/assets",
-    "../routes",
-    "../database/migrations",
-    "../database/seeds",
-    "../database/factories",
-    "../.env",
-    "../composer.json"
+$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+
+$requiredPaths = @(
+    "app\Core",
+    "app\Modules",
+    "config",
+    "public\index.php",
+    "resources\views",
+    "resources\assets",
+    "database\migrations",
+    "database\seeds",
+    ".env",
+    "composer.json"
 )
 
-foreach ($path in $paths) {
-    if (!(Test-Path $path)) {
-        Write-Host "❌ Missing: $path"
+$optionalPaths = @(
+    "routes",
+    "database\factories"
+)
+
+foreach ($relativePath in $requiredPaths) {
+    $resolvedPath = Join-Path $repoRoot $relativePath
+
+    if (!(Test-Path -LiteralPath $resolvedPath)) {
+        Write-Host "❌ Missing required path: $relativePath"
     } else {
-        Write-Host "✅ Found: $path"
+        Write-Host "✅ Found required path: $relativePath"
+    }
+}
+
+foreach ($relativePath in $optionalPaths) {
+    $resolvedPath = Join-Path $repoRoot $relativePath
+
+    if (Test-Path -LiteralPath $resolvedPath) {
+        Write-Host "✅ Found optional path: $relativePath"
+    } else {
+        Write-Host "ℹ️ Optional path not present: $relativePath"
     }
 }
 
 # Check modules
-$modules = Get-ChildItem app/Modules -Directory
+$modulesPath = Join-Path $repoRoot "app\Modules"
+$modules = @(Get-ChildItem -LiteralPath $modulesPath -Directory)
 Write-Host "Modules detected: $($modules.Count)"
 
 # Check controllers
-$controllers = Get-ChildItem -Recurse -Filter "*Controller.php" app/
+$appPath = Join-Path $repoRoot "app"
+$controllers = @(Get-ChildItem -LiteralPath $appPath -Recurse -Filter "*Controller.php" -File)
 Write-Host "Controllers: $($controllers.Count)"
 
 # Check views
-$views = Get-ChildItem -Recurse -Filter "*.php" resources/views
+$viewsPath = Join-Path $repoRoot "resources\views"
+$views = @(Get-ChildItem -LiteralPath $viewsPath -Recurse -Filter "*.php" -File)
 Write-Host "Views: $($views.Count)"
 
-Write-Host "=== VALIDATION COMPLETE ==="    
+Write-Host "Repo root: $repoRoot"
+Write-Host "=== VALIDATION COMPLETE ==="
