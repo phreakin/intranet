@@ -37,12 +37,11 @@ $isActive = static function (string $currentPath, array $matchers): bool {
 };
 ?>
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" class="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= Helpers::e(($title ?? '') . ' · ' . $appName) ?></title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@latest/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@latest/css/all.min.css">
     <link rel="stylesheet" href="/assets/css/tailwind.css">
     <link rel="stylesheet" href="/assets/css/theme.css">
@@ -50,96 +49,43 @@ $isActive = static function (string $currentPath, array $matchers): bool {
 <body class="intel-body">
 <div class="intel-shell" data-sidebar-state="expanded" data-sidebar-open="false">
     <aside class="intel-sidebar glass-shell">
-        <div class="d-flex align-items-center justify-content-between gap-2">
-            <a class="intel-brand text-decoration-none" href="/">
+        <div class="flex items-center justify-between gap-2">
+            <a class="intel-brand" href="/">
                 <span class="intel-brand-mark">IQ</span>
-                <span class="intel-brand-copy d-flex flex-column">
+                <span class="intel-brand-copy flex flex-col">
                     <span class="intel-brand-title"><?= Helpers::e($appName) ?></span>
-                    <span class="intel-brand-subtitle"><?= Helpers::e('Forensic intranet grid') ?></span>
+                    <span class="intel-brand-subtitle">Forensic intranet grid</span>
                 </span>
             </a>
-            <button class="intel-sidebar-toggle" type="button" data-sidebar-toggle aria-label="Toggle sidebar">||</button>
+            <button class="intel-sidebar-toggle" type="button" data-sidebar-toggle>||</button>
         </div>
 
-        <div>
-            <p class="intel-nav-heading">Operational Views</p>
-            <nav class="intel-nav">
-                <?php foreach ($navItems as $item): ?>
-                    <?php if (in_array($item['label'], ['Moderation', 'Admin', 'Settings'], true) && !$isStaff): ?>
-                        <?php continue; ?>
-                    <?php endif; ?>
-                    <a
-                        class="intel-nav-link <?= $isActive($path, $item['match']) ? 'active' : '' ?>"
-                        href="<?= Helpers::e($item['href']) ?>"
-                        title="<?= Helpers::e($item['label']) ?>"
-                    >
-                        <span class="nav-icon"><?= Helpers::e($item['short']) ?></span>
-                        <span class="nav-label"><?= Helpers::e($item['label']) ?></span>
-                    </a>
-                <?php endforeach; ?>
-            </nav>
-        </div>
-
-        <div class="intel-sidebar-footer">
-            <div class="intel-nav-heading mb-2">System Status</div>
-            <div class="small text-secondary">Single-node private runtime</div>
-            <div class="page-actions mt-3">
-                <span class="chip chip-success">Server Rendered</span>
-                <span class="chip chip-neutral">Low JS</span>
-            </div>
-        </div>
+        <nav class="intel-nav mt-6">
+            <?php foreach ($navItems as $item): ?>
+                <?php if (in_array($item['label'], ['Moderation', 'Admin', 'Settings'], true) && !$isStaff) continue; ?>
+                <a class="intel-nav-link <?= $isActive($path, $item['match']) ? 'active' : '' ?>" href="<?= Helpers::e($item['href']) ?>">
+                    <span><?= Helpers::e($item['short']) ?></span>
+                    <span><?= Helpers::e($item['label']) ?></span>
+                </a>
+            <?php endforeach; ?>
+        </nav>
     </aside>
 
     <div class="intel-main">
-        <header class="intel-topbar glass-panel">
-            <div class="intel-topbar-group">
-                <button class="intel-sidebar-toggle intel-mobile-sidebar-toggle" type="button" data-sidebar-mobile-toggle aria-label="Open navigation">[]</button>
-                <form class="intel-search" method="get" action="/">
-                    <div class="input-group">
-                        <span class="input-group-text">Search</span>
-                        <input
-                            class="form-control"
-                            type="search"
-                            name="q"
-                            value="<?= Helpers::e((string) ($_GET['q'] ?? '')) ?>"
-                            placeholder="Search posts, tags, signals, investigations"
-                            aria-label="Global search"
-                        >
-                    </div>
-                </form>
-            </div>
+        <header class="intel-topbar glass-panel flex items-center justify-between gap-4">
+            <form class="w-full max-w-xl" method="get" action="/">
+                <input class="search-input w-full" type="search" name="q" placeholder="Search intelligence...">
+            </form>
 
-            <div class="intel-topbar-actions">
+            <div class="flex items-center gap-2">
                 <?php if ($currentUser): ?>
-                    <a class="btn btn-primary btn-sm" href="/submit">Submit Link</a>
-                    <a class="btn btn-outline-light btn-sm" href="/favorites">Favorites</a>
-                    <a class="btn btn-outline-light btn-sm" href="/bookmarks">Bookmarks</a>
-                    <?php if ($isStaff): ?>
-                        <a class="btn btn-outline-info btn-sm" href="/admin">Control Room</a>
-                    <?php endif; ?>
-                    <button class="btn btn-ghost btn-icon btn-sm" type="button" aria-label="Notifications">NT</button>
-                    <div class="dropdown">
-                        <button class="btn avatar-pill dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <span class="avatar-mark"><?= Helpers::e($identityInitials) ?></span>
-                            <span class="d-none d-sm-inline"><?= Helpers::e($identity) ?></span>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="/user/<?= (int) $currentUser['id'] ?>">Profile</a></li>
-                            <?php if ($isStaff): ?>
-                                <li><a class="dropdown-item" href="/admin">Admin Dashboard</a></li>
-                            <?php endif; ?>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <form method="post" action="/logout" class="px-2 py-1">
-                                    <input type="hidden" name="_csrf" value="<?= Helpers::e(Csrf::token()) ?>">
-                                    <button class="btn btn-outline-danger btn-sm w-100" type="submit">Logout</button>
-                                </form>
-                            </li>
-                        </ul>
-                    </div>
+                    <a class="px-3 py-2 bg-cyan-500 text-black rounded-lg" href="/submit">Submit</a>
+                    <form method="post" action="/logout">
+                        <input type="hidden" name="_csrf" value="<?= Helpers::e(Csrf::token()) ?>">
+                        <button class="px-3 py-2 border border-red-500/40 text-red-300 rounded-lg">Logout</button>
+                    </form>
                 <?php else: ?>
-                    <a class="btn btn-outline-light btn-sm" href="/login">Login</a>
-                    <a class="btn btn-primary btn-sm" href="/register">Register</a>
+                    <a class="px-3 py-2 border rounded-lg" href="/login">Login</a>
                 <?php endif; ?>
             </div>
         </header>
@@ -149,8 +95,6 @@ $isActive = static function (string $currentPath, array $matchers): bool {
         </main>
     </div>
 </div>
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/assets/js/app.js"></script>
 </body>
 </html>
