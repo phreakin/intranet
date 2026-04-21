@@ -4,15 +4,35 @@ use Intranet\Core\Helpers;
 
 $alerts = $alerts ?? [];
 ?>
-<div class="intel-alert-list">
+<div class="flex flex-col gap-3">
     <?php foreach ($alerts as $alert): ?>
-        <article class="intel-alert-card">
-            <span class="alert-severity severity-<?= Helpers::e((string) ($alert['severity'] ?? 'low')) ?>"></span>
-            <div class="flex-grow-1">
-                <div class="intel-feed-meta"><?= strtoupper(Helpers::e((string) ($alert['severity'] ?? 'low'))) ?> PRIORITY</div>
-                <div class="intel-feed-body"><strong><?= Helpers::e((string) ($alert['title'] ?? 'Alert')) ?></strong></div>
-                <div class="panel-copy mt-1"><?= Helpers::e((string) ($alert['message'] ?? 'No details available.')) ?></div>
+        <?php
+        $severity = strtolower((string) ($alert['severity'] ?? 'low'));
+        $colorMap = [
+            'low' => 'border-slate-500/30 bg-slate-500/10',
+            'medium' => 'border-yellow-500/40 bg-yellow-500/10',
+            'high' => 'border-red-500/40 bg-red-500/10',
+        ];
+        ?>
+
+        <article class="flex gap-3 rounded-xl border <?= $colorMap[$severity] ?? $colorMap['low'] ?> p-3">
+
+            <div class="w-2 rounded-full bg-current opacity-70"></div>
+
+            <div class="flex-1">
+                <div class="text-[10px] uppercase tracking-wider text-slate-400">
+                    <?= strtoupper(Helpers::e($severity)) ?> PRIORITY
+                </div>
+
+                <div class="text-sm font-semibold text-white mt-1">
+                    <?= Helpers::e((string) ($alert['title'] ?? 'Alert')) ?>
+                </div>
+
+                <div class="text-xs text-slate-300 mt-1">
+                    <?= Helpers::e((string) ($alert['message'] ?? 'No details available.')) ?>
+                </div>
             </div>
+
         </article>
     <?php endforeach; ?>
 </div>
