@@ -12,8 +12,10 @@
   },
   "scripts": {
     "test": [
-      "php -l public/index.php",
-      "find app -name '*.php' -print0 | xargs -0 -n1 php -l"
-    ]
+      "php -l app/index.php",
+      "find app -name '*.php' | php -l *.php"
+    ],
+    "lint": "php -l public/*.php",
+    "start": "php -S 127.0.0.1:8080 -t public"
   }
 }

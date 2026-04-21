@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Intranet\Core;
 
 use Intranet\Modules\Shared\Repositories\UserRepository;
+use Intranet\Modules\Shared\Services\PermissionService;
 
 final class Auth
 {
@@ -65,6 +66,29 @@ final class Auth
     public static function requireRole(string ...$roles): void
     {
         if (!self::hasRole(...$roles)) {
+            http_response_code(403);
+            exit('Forbidden');
+        }
+    }
+
+    /**
+     * Fine-grained permission check. Admins always pass.
+     */
+    public static function can(string $permission): bool
+    {
+        $user = self::user();
+        if ($user === null) {
+            return false;
+        }
+        if (self::hasRole('Admin')) {
+            return true;
+        }
+        return (new PermissionService())->userCan((int) $user['id'], $permission);
+    }
+
+    public static function requireCan(string $permission): void
+    {
+        if (!self::can($permission)) {
             http_response_code(403);
             exit('Forbidden');
         }

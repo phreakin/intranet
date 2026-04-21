@@ -1,22 +1,29 @@
-CREATE TABLE roles (
+CREATE TABLE IF NOT EXISTS roles (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(50) NOT NULL UNIQUE
-);
+    name VARCHAR(50) NOT NULL UNIQUE,
+    description VARCHAR(255) NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Roles table';
 
-CREATE TABLE permissions (
+CREATE TABLE IF NOT EXISTS permissions (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL UNIQUE
-);
+    name VARCHAR(100) NOT NULL UNIQUE,
+    description VARCHAR(255) NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Permissions table';
 
-CREATE TABLE role_permissions (
+CREATE TABLE IF NOT EXISTS role_permissions (
     role_id BIGINT UNSIGNED NOT NULL,
     permission_id BIGINT UNSIGNED NOT NULL,
-    PRIMARY KEY (role_id, permission_id),
+    UNIQUE KEY uq_role_permission (role_id, permission_id),
     FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
-    FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE
-);
+    FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE,
+    PRIMARY KEY (role_id, permission_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Role-Permission relationship table';
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(190) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NULL,
@@ -28,7 +35,7 @@ CREATE TABLE users (
     updated_at DATETIME NOT NULL
 );
 
-CREATE TABLE user_roles (
+CREATE TABLE IF NOT EXISTS user_roles (
     user_id BIGINT UNSIGNED NOT NULL,
     role_id BIGINT UNSIGNED NOT NULL,
     PRIMARY KEY (user_id, role_id),
@@ -36,7 +43,7 @@ CREATE TABLE user_roles (
     FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
 );
 
-CREATE TABLE oauth_accounts (
+CREATE TABLE IF NOT EXISTS oauth_accounts (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT UNSIGNED NOT NULL,
     provider VARCHAR(32) NOT NULL,
@@ -46,14 +53,14 @@ CREATE TABLE oauth_accounts (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE badges (
+CREATE TABLE IF NOT EXISTS badges (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
     description VARCHAR(255) NULL,
     created_at DATETIME NOT NULL
 );
 
-CREATE TABLE user_badges (
+CREATE TABLE IF NOT EXISTS user_badges (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT UNSIGNED NOT NULL,
     badge_id BIGINT UNSIGNED NOT NULL,
@@ -64,21 +71,21 @@ CREATE TABLE user_badges (
     FOREIGN KEY (badge_id) REFERENCES badges(id) ON DELETE CASCADE
 );
 
-CREATE TABLE categories (
+CREATE TABLE IF NOT EXISTS categories (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(120) NOT NULL UNIQUE,
     slug VARCHAR(150) NOT NULL UNIQUE,
     created_at DATETIME NOT NULL
 );
 
-CREATE TABLE tags (
+CREATE TABLE IF NOT EXISTS tags (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(120) NOT NULL,
     slug VARCHAR(150) NOT NULL UNIQUE,
     created_at DATETIME NOT NULL
 );
 
-CREATE TABLE posts (
+CREATE TABLE IF NOT EXISTS posts (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT UNSIGNED NOT NULL,
     category_id BIGINT UNSIGNED NULL,
@@ -106,7 +113,7 @@ CREATE TABLE posts (
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
 );
 
-CREATE TABLE post_status_tags (
+CREATE TABLE IF NOT EXISTS post_status_tags (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     post_id BIGINT UNSIGNED NOT NULL,
     status_tag VARCHAR(64) NOT NULL,
@@ -115,7 +122,7 @@ CREATE TABLE post_status_tags (
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
 );
 
-CREATE TABLE post_tags (
+CREATE TABLE IF NOT EXISTS post_tags (
     post_id BIGINT UNSIGNED NOT NULL,
     tag_id BIGINT UNSIGNED NOT NULL,
     PRIMARY KEY (post_id, tag_id),
@@ -123,7 +130,7 @@ CREATE TABLE post_tags (
     FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
 );
 
-CREATE TABLE comments (
+CREATE TABLE IF NOT EXISTS comments (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     post_id BIGINT UNSIGNED NOT NULL,
     user_id BIGINT UNSIGNED NOT NULL,
@@ -137,12 +144,12 @@ CREATE TABLE comments (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE comment_tags (
+CREATE TABLE IF NOT EXISTS comment_tags (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(60) NOT NULL UNIQUE
 );
 
-CREATE TABLE comment_tag_map (
+CREATE TABLE IF NOT EXISTS comment_tag_map (
     comment_id BIGINT UNSIGNED NOT NULL,
     comment_tag_id BIGINT UNSIGNED NOT NULL,
     PRIMARY KEY (comment_id, comment_tag_id),
@@ -150,7 +157,7 @@ CREATE TABLE comment_tag_map (
     FOREIGN KEY (comment_tag_id) REFERENCES comment_tags(id) ON DELETE CASCADE
 );
 
-CREATE TABLE post_votes (
+CREATE TABLE IF NOT EXISTS post_votes (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     post_id BIGINT UNSIGNED NOT NULL,
     user_id BIGINT UNSIGNED NOT NULL,
@@ -162,7 +169,7 @@ CREATE TABLE post_votes (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE post_favorites (
+CREATE TABLE IF NOT EXISTS post_favorites (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     post_id BIGINT UNSIGNED NOT NULL,
     user_id BIGINT UNSIGNED NOT NULL,
@@ -173,7 +180,7 @@ CREATE TABLE post_favorites (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE post_bookmarks (
+CREATE TABLE IF NOT EXISTS post_bookmarks (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     post_id BIGINT UNSIGNED NOT NULL,
     user_id BIGINT UNSIGNED NOT NULL,
@@ -184,7 +191,7 @@ CREATE TABLE post_bookmarks (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE post_reports (
+CREATE TABLE IF NOT EXISTS post_reports (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     post_id BIGINT UNSIGNED NOT NULL,
     user_id BIGINT UNSIGNED NOT NULL,
@@ -196,7 +203,7 @@ CREATE TABLE post_reports (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE comment_reports (
+CREATE TABLE IF NOT EXISTS comment_reports (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     comment_id BIGINT UNSIGNED NOT NULL,
     user_id BIGINT UNSIGNED NOT NULL,
@@ -208,7 +215,7 @@ CREATE TABLE comment_reports (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE moderation_logs (
+CREATE TABLE IF NOT EXISTS moderation_logs (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     actor_user_id BIGINT UNSIGNED NOT NULL,
     target_type VARCHAR(40) NOT NULL,
@@ -220,7 +227,7 @@ CREATE TABLE moderation_logs (
     FOREIGN KEY (actor_user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE ai_moderation_logs (
+CREATE TABLE IF NOT EXISTS ai_moderation_logs (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     target_type VARCHAR(40) NOT NULL,
     target_id BIGINT UNSIGNED NOT NULL,
@@ -237,13 +244,16 @@ CREATE TABLE ai_moderation_logs (
     admin_decision VARCHAR(40) NOT NULL DEFAULT 'pending',
     admin_reviewed_by BIGINT UNSIGNED NULL,
     reviewed_at DATETIME NULL,
-    created_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX admin_reviewed_by (admin_reviewed_by),
     INDEX idx_ai_review (review_status, created_at),
     FOREIGN KEY (admin_reviewed_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
-CREATE TABLE settings (
+CREATE TABLE IF NOT EXISTS settings (
     `key` VARCHAR(100) PRIMARY KEY,
     `value` TEXT NULL,
-    updated_at DATETIME NOT NULL
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
