@@ -11,30 +11,39 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+Set-StrictMode -Version Latest
+
+$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+Set-Location $repoRoot
 
 function Write-Section {
     param([string]$Message)
+
     Write-Host ""
     Write-Host "=== $Message ===" -ForegroundColor Cyan
 }
 
 function Write-Info {
     param([string]$Message)
+
     Write-Host "[INFO] $Message" -ForegroundColor Gray
 }
 
 function Write-Success {
     param([string]$Message)
+
     Write-Host "[OK] $Message" -ForegroundColor Green
 }
 
 function Write-WarnMsg {
     param([string]$Message)
+
     Write-Host "[WARN] $Message" -ForegroundColor Yellow
 }
 
 function Write-ErrMsg {
     param([string]$Message)
+
     Write-Host "[ERROR] $Message" -ForegroundColor Red
 }
 
@@ -74,7 +83,7 @@ function Invoke-Git {
 }
 
 function Test-GitRepo {
-    if (!(Test-Path ".git")) {
+    if (!(Test-Path -LiteralPath (Join-Path $repoRoot ".git"))) {
         throw "Current directory is not a git repository."
     }
 }
@@ -96,7 +105,11 @@ function Get-ChangedFiles {
         return @()
     }
 
-    return ($result.Output -split "`r?`n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    return @($result.Output -split "`r?`n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+}
+
+function Has-WorkingTreeChanges {
+    return (Get-ChangedFiles).Count -gt 0
 }
 
 function Run-ValidationIfPresent {
@@ -107,15 +120,15 @@ function Run-ValidationIfPresent {
 
     $validateScript = Join-Path $PSScriptRoot "validate.ps1"
 
-    if (Test-Path $validateScript) {
+    if (Test-Path -LiteralPath $validateScript) {
         Write-Section "Running Validation"
 
         if ($DryRun) {
-            Write-Host "[DRY-RUN] powershell -ExecutionPolicy Bypass -File `"$validateScript`"" -ForegroundColor Magenta
+            Write-Host "[DRY-RUN] powershell -NoProfile -ExecutionPolicy Bypass -File `"$validateScript`"" -ForegroundColor Magenta
             return
         }
 
-        & powershell -ExecutionPolicy Bypass -File $validateScript
+        & powershell -NoProfile -ExecutionPolicy Bypass -File $validateScript
         if ($LASTEXITCODE -ne 0) {
             throw "Validation script failed."
         }
@@ -141,13 +154,18 @@ function Build-CommitMessage {
     $count = $ChangedFiles.Count
 
     $topFiles = $ChangedFiles |
-            ForEach-Object {
-                if ($_.Length -ge 4) { $_.Substring(3).Trim() } else { $_.Trim() }
-            } |
-            Select-Object -First 5
+        ForEach-Object {
+            if ($_.Length -ge 4) {
+                $_.Substring(3).Trim()
+            }
+            else {
+                $_.Trim()
+            }
+        } |
+        Select-Object -First 5
 
     $fileSummary = if ($topFiles.Count -gt 0) {
-        ($topFiles -join ", ")
+        $topFiles -join ", "
     }
     else {
         "repo updates"
@@ -207,31 +225,36 @@ try {
         $Branch = Get-CurrentBranch
     }
 
-    Write-Info "Repository: $(Get-Location)"
+    Write-Info "Repository: $repoRoot"
     Write-Info "Remote: $Remote"
     Write-Info "Branch: $Branch"
 
     Run-ValidationIfPresent
 
-    Write-Section "Stage All Changes"
-    Invoke-Git -Arguments @("add", ".") | Out-Null
-    Write-Success "All local changes staged with git add ."
+    if (Has-WorkingTreeChanges) {
+        Write-Section "Stage All Changes"
+        Invoke-Git -Arguments @("add", ".") | Out-Null
+        Write-Success "All local changes staged with git add ."
 
-    $changedFiles = Get-ChangedFiles
-    Show-ChangedFiles -ChangedFiles $changedFiles
+        $changedFiles = Get-ChangedFiles
+        Show-ChangedFiles -ChangedFiles $changedFiles
 
-    if ($changedFiles.Count -gt 0) {
-        Write-Section "Commit Changes"
+        if ($changedFiles.Count -gt 0) {
+            Write-Section "Commit Changes"
 
-        $finalCommitMessage = Build-CommitMessage -ManualMessage $CommitMessage -ChangedFiles $changedFiles
-        Write-Info "Commit message:"
-        Write-Host "  $finalCommitMessage" -ForegroundColor White
+            $finalCommitMessage = Build-CommitMessage -ManualMessage $CommitMessage -ChangedFiles $changedFiles
+            Write-Info "Commit message:"
+            Write-Host "  $finalCommitMessage" -ForegroundColor White
 
-        Invoke-Git -Arguments @("commit", "-m", $finalCommitMessage) | Out-Null
-        Write-Success "Commit created."
+            Invoke-Git -Arguments @("commit", "-m", $finalCommitMessage) | Out-Null
+            Write-Success "Commit created."
+        }
+        else {
+            Write-WarnMsg "No staged changes were detected after git add ."
+        }
     }
     else {
-        Write-WarnMsg "Nothing new to commit."
+        Write-Info "No local changes detected. Skipping stage and commit."
     }
 
     Write-Section "Fetch Remote"
@@ -245,7 +268,7 @@ try {
         Write-Section "Pull Remote Changes"
         Write-WarnMsg "Local branch is behind by $($aheadBehind.Behind) commit(s). Pulling with rebase."
 
-        $pullResult = Invoke-Git -Arguments @("pull", $Remote, $Branch, "--rebase") -AllowFailure
+        $pullResult = Invoke-Git -Arguments @("pull", "--rebase", $Remote, $Branch) -AllowFailure
         if ($pullResult.ExitCode -ne 0) {
             throw "Pull failed:`n$($pullResult.Output)"
         }
@@ -259,7 +282,10 @@ try {
         Write-Info "No pull needed."
     }
 
-    if (-not $SkipPush) {
+    $aheadBehind = Get-AheadBehind -RemoteName $Remote -BranchName $Branch
+    Write-Info "Post-pull remote status -> Behind: $($aheadBehind.Behind), Ahead: $($aheadBehind.Ahead)"
+
+    if (-not $SkipPush -and $aheadBehind.Ahead -gt 0) {
         Write-Section "Push Changes"
 
         $pushResult = Invoke-Git -Arguments @("push", $Remote, $Branch) -AllowFailure
@@ -278,8 +304,11 @@ try {
             Write-Success "Push successful."
         }
     }
-    else {
+    elseif ($SkipPush) {
         Write-WarnMsg "Push skipped by option."
+    }
+    else {
+        Write-Info "No push needed."
     }
 
     Write-Section "Git Sync Complete"
