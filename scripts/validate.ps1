@@ -1,12 +1,18 @@
 Write-Host "=== VALIDATING INTRANET ==="
 
 $paths = @(
-    "app/Core",
-    "app/Modules",
-    "config",
-    "public/index.php",
-    "resources/views",
-    "database/migrations"
+    "../app/Core",
+    "../app/Modules",
+    "../config",
+    "../public/index.php",
+    "../resources/views",
+    "../resources/assets",
+    "../routes",
+    "../database/migrations",
+    "../database/seeds",
+    "../database/factories",
+    "../.env",
+    "../composer.json"
 )
 
 foreach ($path in $paths) {
