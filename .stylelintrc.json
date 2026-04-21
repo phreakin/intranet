@@ -1,14 +1,7 @@
 {
-  "extends": [
-    "stylelint-config-standard",
-    "stylelint-config-tailwindcss"
-  ],
-  "plugins": [
-    "stylelint-order"
-  ],
-  "ignoreFiles": [
-    "public/assets/css/*.css"
-  ],
+  "extends": ["stylelint-config-standard", "stylelint-config-tailwindcss"],
+  "plugins": ["stylelint-order"],
+  "ignoreFiles": ["public/assets/css/*.css"],
   "rules": {
     "alpha-value-notation": null,
     "at-rule-no-unknown": null,

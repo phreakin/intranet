@@ -5,7 +5,6 @@
   "license": "proprietary",
   "minimum-stability": "stable",
   "prefer-stable": true,
-
   "require": {
     "php": "^8.2",
     "ext-pdo": "*",
@@ -13,23 +12,19 @@
     "ext-curl": "*",
     "ext-mbstring": "*"
   },
-
   "require-dev": {
     "symfony/var-dumper": "^6.4"
   },
-
   "autoload": {
     "psr-4": {
       "Intranet\\": "app/"
     }
   },
-
   "autoload-dev": {
     "psr-4": {
       "Tests\\": "tests/"
     }
   },
-
   "scripts": {
     "post-install-cmd": [
       "@composer dump-autoload"
@@ -37,23 +32,18 @@
     "post-update-cmd": [
       "@composer dump-autoload"
     ],
-
     "serve": "php -S 127.0.0.1:8080 -t public",
-
     "lint": [
       "php -l public/index.php",
       "powershell -ExecutionPolicy Bypass -File scripts/lint.ps1"
     ],
-
     "test": [
       "@lint"
     ],
-
     "sync": [
       "powershell -ExecutionPolicy Bypass -File scripts/git_sync.ps1"
     ]
   },
-
   "config": {
     "optimize-autoloader": true,
     "sort-packages": true

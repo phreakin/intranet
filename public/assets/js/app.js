@@ -225,7 +225,13 @@
           activeTag === "TEXTAREA" ||
           activeTag === "SELECT");
 
-      if (event.key === "/" && !event.metaKey && !event.ctrlKey && !event.altKey && !isTypingContext) {
+      if (
+        event.key === "/" &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey &&
+        !isTypingContext
+      ) {
         event.preventDefault();
         search.focus();
         search.select();

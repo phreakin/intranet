@@ -15,7 +15,8 @@
     "lint": "npm run lint:js && npm run lint:css",
     "lint:js": "eslint .",
     "lint:css": "stylelint \"./resources/assets/css/**/*.css\"",
-    "format": "prettier --write \"./{*.js,*.json,*.md}\" \"./resources/**/*.{js,css,json,md}\" \"./public/assets/js/**/*.js\""
+    "format": "prettier --write \"./{*.js,*.json,*.md}\" \"./resources/**/*.{js,css,json,md}\" \"./public/assets/js/**/*.js\"",
+    "format:check": "prettier --check \"./{*.js,*.json,*.md}\" \"./resources/**/*.{js,css,json,md}\" \"./public/assets/js/**/*.js\""
   },
   "repository": {
     "type": "git",
@@ -41,16 +42,16 @@
   },
   "homepage": "https://github.com/phreakin/intranet#readme",
   "devDependencies": {
-    "@eslint/js": "^9.25.1",
+    "@eslint/js": "^9.39.4",
     "autoprefixer": "^10.4.20",
-    "eslint": "^9.25.1",
-    "globals": "^16.0.0",
+    "eslint": "^9.39.4",
+    "globals": "^16.5.0",
     "postcss": "^8.4.49",
-    "prettier": "^3.5.3",
-    "stylelint": "^16.19.1",
+    "prettier": "^3.8.3",
+    "stylelint": "^16.26.1",
     "stylelint-config-standard": "^38.0.0",
-    "stylelint-config-tailwindcss": "^1.0.0",
-    "stylelint-order": "^7.0.0",
+    "stylelint-config-tailwindcss": "^1.0.1",
+    "stylelint-order": "^7.0.1",
     "tailwindcss": "^3.4.17"
   }
 }
