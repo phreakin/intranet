@@ -89,10 +89,11 @@ function Test-GitRepo {
 }
 
 function Get-CurrentBranch {
-    $result = Invoke-Git -Arguments @("rev-parse", "--abbrev-ref", "HEAD")
-    $current = $result.Output.Trim()
+    $output = & git rev-parse --abbrev-ref HEAD 2>&1
+    $exitCode = $LASTEXITCODE
+    $current = ($output | Out-String).Trim()
 
-    if ([string]::IsNullOrWhiteSpace($current)) {
+    if ($exitCode -ne 0 -or [string]::IsNullOrWhiteSpace($current)) {
         throw "Unable to determine current git branch."
     }
 
