@@ -1,5 +1,9 @@
 Write-Host "=== PHP LINT START ==="
 
+# Resolve repo root (script location → parent)
+$repoRoot = Split-Path -Parent $PSScriptRoot
+
+# Only scan THESE directories (your codebase)
 $targetDirs = @(
     "app",
     "public",
@@ -9,9 +13,19 @@ $targetDirs = @(
 $files = @()
 
 foreach ($dir in $targetDirs) {
-    if (Test-Path $dir) {
-        $files += Get-ChildItem -Path $dir -Recurse -Filter *.php -File
+    $fullPath = Join-Path $repoRoot $dir
+
+    if (Test-Path $fullPath) {
+        $files += Get-ChildItem -Path $fullPath -Recurse -Filter *.php -File
     }
+    else {
+        Write-Host "[WARN] Missing directory: $fullPath"
+    }
+}
+
+if ($files.Count -eq 0) {
+    Write-Host "[WARN] No PHP files found to lint"
+    exit 0
 }
 
 foreach ($file in $files) {
