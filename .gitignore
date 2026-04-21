@@ -1,5 +1,81 @@
+# ----------------------------------------
+# Intranet Prompt — PHP/MySQL .gitignore
+# ----------------------------------------
+
+# OS / Editor junk
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*.bak
+
+# Composer
 /vendor/
-/.env
-/.env.local
-/storage/cache/*
-/storage/logs/*
+/composer.lock
+
+# Environment / Secrets
+.env
+.env.*
+*.local.php
+config/database.local.php
+
+# Cache / Logs / Temp
+/storage/cache/
+/storage/logs/
+/storage/tmp/
+/tmp/
+/cache/
+
+# Sessions
+/sessions/
+
+# Uploaded files (if any future modules use uploads)
+public/uploads/
+uploads/
+
+# Node (if UI tooling ever added)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# IDE / Project Files
+.vscode/
+.idea/
+*.iml
+
+# PHPStorm / JetBrains
+/.phpstorm.meta.php
+/.phpunit.result.cache
+
+# PHPUnit
+.phpunit.cache/
+phpunit.xml
+phpunit.xml.dist
+
+# Generated assets
+public/assets/css/*.map
+public/assets/js/*.map
+
+# Backup files
+*.old
+*.orig
+
+# SQL dumps
+*.sql
+*.sql.gz
+*.dump
+
+# System files
+*.lock
+*.pid
+
+# Logs
+*.log
+
+# Optional AI module artifacts (future)
+ai_cache/
+ai_logs/
+
+# Bookmarklet build artifacts (if compiled)
+public/bookmarklet.min.js
