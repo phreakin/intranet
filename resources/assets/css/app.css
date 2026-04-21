@@ -5,7 +5,7 @@
 @layer base {
     body {
         @apply bg-bg-950 text-text-100 antialiased;
-        background-image: theme('backgroundImage.radial-intel');
+        background-image: theme('backgroundImage.gradient-to-t');
     }
 }
 
