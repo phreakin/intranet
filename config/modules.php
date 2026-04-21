@@ -3,11 +3,18 @@
 declare(strict_types=1);
 
 return [
-    'Core' => true,
+    // Shared runtime / platform services
+    'Shared' => true,
+
+    // Primary application modules
     'Authentication' => true,
     'Users' => true,
     'Dashboard' => true,
     'Posts' => true,
+    'Admin' => true,
+    'Cms' => true,
+
+    // Logical domain modules handled inside broader folders today
     'Categories' => true,
     'Tags' => true,
     'Comments' => true,
@@ -16,9 +23,13 @@ return [
     'Bookmarks' => true,
     'Reports' => true,
     'Moderation' => true,
-    'AI' => true,
-    'Admin' => true,
+    'AiModeration' => true,
     'Bookmarklet' => true,
-    'CMSHooks' => true,
     'RBAC' => true,
+    'Taxonomy' => true,
+    'Profiles' => true,
+    'Badges' => true,
+    'Roles' => true,
+    'Settings' => true,
+    'Search' => true,
 ];
