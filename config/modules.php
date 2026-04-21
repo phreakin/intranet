@@ -14,7 +14,7 @@ return [
     'Admin' => true,
     'Cms' => true,
 
-    // Logical domain modules handled inside broader folders today
+    // Phase 1 / 2 logical domain modules handled inside broader folders today
     'Categories' => true,
     'Tags' => true,
     'Comments' => true,
@@ -32,4 +32,37 @@ return [
     'Roles' => true,
     'Settings' => true,
     'Search' => true,
+
+    // Phase 3 expansion
+    'ModuleRegistry' => true,
+    'Pages' => true,
+    'Articles' => true,
+
+    // Phase 4 expansion
+    'Automation' => false,
+    'RecommendationEngine' => false,
+    'RelatedContent' => false,
+    'Analytics' => false,
+
+    // Phase 5 / 9 expansion
+    'ActivityTracking' => false,
+    'SessionTracking' => false,
+    'BanManagement' => false,
+
+    // Phase 6 / 10 expansion
+    'ModerationEngine' => false,
+
+    // Phase 7 / 11 / 12 expansion
+    'Api' => false,
+    'Integrations' => false,
+    'ImportExport' => false,
+    'BackupRestore' => false,
+    'Webhooks' => false,
+
+    // Phase 8 expansion
+    'PluginSystem' => false,
+    'Personalization' => false,
+    'CustomFeeds' => false,
+    'Notifications' => false,
+    'Apps' => false,
 ];
