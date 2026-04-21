@@ -27,8 +27,10 @@
                     <label for="passwordInput" class="text-secondary">Password</label>
                 </div>
 
-                <button class="btn btn-primary w-100 py-2 fw-semibold" type="submit">
-                    <img src="<?= Helpers::svgsNav()['users'] ?>" width="20">
+                <button class="btn btn-primary w-100 py-2 fw-semibold d-flex justify-content-center" type="submit">
+                    <span class="d-flex align-items-center me-2">
+                        <img src="<?= Helpers::svgsNav()['turn_right'] ?>" width="24" alt="Sign In">
+                    </span>
                     Sign In
                 </button>
             </form>
