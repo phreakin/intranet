@@ -1,12 +1,29 @@
-Write-Host "=== DEV RESET ==="
+. (Join-Path $PSScriptRoot "common.ps1")
 
-# Clear logs
-Remove-Item storage/logs/* -Recurse -Force -ErrorAction SilentlyContinue
+param(
+    [switch]$IncludeSeeds
+)
 
-# Clear cache
-Remove-Item storage/cache/* -Recurse -Force -ErrorAction SilentlyContinue
+$ErrorActionPreference = "Stop"
+Enter-RepoRoot
 
-# Re-run migrations
-.\scripts\migrate.ps1
+Write-Section "Dev Reset"
 
-Write-Host "=== RESET COMPLETE ==="
+$pathsToClear = @(
+    "storage\cache",
+    "storage\logs"
+)
+
+foreach ($relativePath in $pathsToClear) {
+    Clear-DirectoryContents -Path (Join-RepoPath $relativePath)
+    Write-Success "Cleared $relativePath"
+}
+
+$migrateArgs = @()
+if ($IncludeSeeds) {
+    $migrateArgs += "-IncludeSeeds"
+}
+
+Invoke-RepoScript -ScriptName "migrate.ps1" -Arguments $migrateArgs
+
+Write-Section "Reset Complete"

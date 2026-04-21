@@ -1,53 +1,74 @@
-# ============================================
-# GIT WATCHER (FIXED + STABLE)
-# ============================================
+. (Join-Path $PSScriptRoot "common.ps1")
 
-$repoPath = Get-Location
+param(
+    [int]$IntervalSeconds = 10,
+    [int]$CooldownSeconds = 30,
+    [switch]$SkipValidation,
+    [switch]$SkipPull,
+    [switch]$SkipPush
+)
 
-Write-Host "=== WATCHING FOR FILE CHANGES ==="
+$ErrorActionPreference = "Stop"
+Enter-RepoRoot
 
-$watcher = New-Object System.IO.FileSystemWatcher
-$watcher.Path = $repoPath
-$watcher.IncludeSubdirectories = $true
-$watcher.EnableRaisingEvents = $true
-
-# Prevent spam commits (cooldown)
-$global:lastRun = Get-Date
-
-$action = {
-    $now = Get-Date
-
-    # Throttle commits (5 sec cooldown)
-    if (($now - $global:lastRun).TotalSeconds -lt 5) {
-        return
-    }
-
-    $global:lastRun = $now
-
-    Write-Host "Change detected..."
-
-    Start-Sleep -Seconds 2
-
-    git add .
-
-    $status = git status --porcelain
-
-    if ($status) {
-        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-        $msg = "Auto Commit [$timestamp]"
-
-        git commit -m "$msg"
-        git push
-
-        Write-Host "[OK] Auto committed and pushed"
-    }
+if (!(Test-CommandExists "git")) {
+    Write-ErrorMsg "git is not available on PATH."
+    exit 1
 }
 
-Register-ObjectEvent $watcher Changed -Action $action | Out-Null
-Register-ObjectEvent $watcher Created -Action $action | Out-Null
-Register-ObjectEvent $watcher Deleted -Action $action | Out-Null
-Register-ObjectEvent $watcher Renamed -Action $action | Out-Null
+Write-Section "Git Watch"
+Write-Info "Polling git status every $IntervalSeconds second(s)."
+
+$lastSignature = ""
+$lastSyncAt = [datetime]::MinValue
 
 while ($true) {
-    Start-Sleep 5
+    $statusLines = @((& git status --porcelain --untracked-files=all) | Where-Object {
+            -not [string]::IsNullOrWhiteSpace($_)
+        })
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-WarnMsg "git status failed. Retrying on next cycle."
+        Start-Sleep -Seconds $IntervalSeconds
+        continue
+    }
+
+    $signature = ($statusLines -join "`n").Trim()
+
+    if (-not [string]::IsNullOrWhiteSpace($signature)) {
+        $secondsSinceSync = (New-TimeSpan -Start $lastSyncAt -End (Get-Date)).TotalSeconds
+
+        if ($signature -ne $lastSignature -and $secondsSinceSync -ge $CooldownSeconds) {
+            Write-Info "Detected repository changes. Running git_sync.ps1."
+
+            $syncArgs = @()
+            if ($SkipValidation) {
+                $syncArgs += "-SkipValidation"
+            }
+            if ($SkipPull) {
+                $syncArgs += "-SkipPull"
+            }
+            if ($SkipPush) {
+                $syncArgs += "-SkipPush"
+            }
+
+            try {
+                Invoke-RepoScript -ScriptName "git_sync.ps1" -Arguments $syncArgs
+                $lastSyncAt = Get-Date
+                $lastSignature = ""
+            }
+            catch {
+                Write-WarnMsg $_.Exception.Message
+                $lastSignature = $signature
+            }
+        }
+        else {
+            $lastSignature = $signature
+        }
+    }
+    else {
+        $lastSignature = ""
+    }
+
+    Start-Sleep -Seconds $IntervalSeconds
 }

@@ -1,6 +1,9 @@
-Write-Host "=== VALIDATING INTRANET ==="
+. (Join-Path $PSScriptRoot "common.ps1")
 
-$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$ErrorActionPreference = "Stop"
+Enter-RepoRoot
+
+Write-Section "Validating Intranet"
 
 $requiredPaths = @(
     "app\Core",
@@ -20,40 +23,43 @@ $optionalPaths = @(
     "database\factories"
 )
 
+$missingRequired = @()
+
 foreach ($relativePath in $requiredPaths) {
-    $resolvedPath = Join-Path $repoRoot $relativePath
+    $resolvedPath = Join-RepoPath $relativePath
 
     if (!(Test-Path -LiteralPath $resolvedPath)) {
-        Write-Host "[MISSING] Required path: $relativePath"
-    } else {
-        Write-Host "[FOUND] Required path: $relativePath"
+        Write-ErrorMsg "Missing required path: $relativePath"
+        $missingRequired += $relativePath
+    }
+    else {
+        Write-Success "Found required path: $relativePath"
     }
 }
 
 foreach ($relativePath in $optionalPaths) {
-    $resolvedPath = Join-Path $repoRoot $relativePath
+    $resolvedPath = Join-RepoPath $relativePath
 
     if (Test-Path -LiteralPath $resolvedPath) {
-        Write-Host "[FOUND] Optional path: $relativePath"
-    } else {
-        Write-Host "[OPTIONAL] Path not present: $relativePath"
+        Write-Success "Found optional path: $relativePath"
+    }
+    else {
+        Write-Info "Optional path not present: $relativePath"
     }
 }
 
-# Check modules
-$modulesPath = Join-Path $repoRoot "app\Modules"
-$modules = @(Get-ChildItem -LiteralPath $modulesPath -Directory)
-Write-Host "Modules detected: $($modules.Count)"
+$modules = @(Get-ChildItem -LiteralPath (Join-RepoPath "app\Modules") -Directory)
+$controllers = @(Get-ChildItem -LiteralPath (Join-RepoPath "app") -Recurse -Filter "*Controller.php" -File)
+$views = @(Get-ChildItem -LiteralPath (Join-RepoPath "resources\views") -Recurse -Filter "*.php" -File)
 
-# Check controllers
-$appPath = Join-Path $repoRoot "app"
-$controllers = @(Get-ChildItem -LiteralPath $appPath -Recurse -Filter "*Controller.php" -File)
-Write-Host "Controllers: $($controllers.Count)"
+Write-Info "Modules detected: $($modules.Count)"
+Write-Info "Controllers detected: $($controllers.Count)"
+Write-Info "Views detected: $($views.Count)"
+Write-Info "Repo root: $(Get-RepoRoot)"
 
-# Check views
-$viewsPath = Join-Path $repoRoot "resources\views"
-$views = @(Get-ChildItem -LiteralPath $viewsPath -Recurse -Filter "*.php" -File)
-Write-Host "Views: $($views.Count)"
+if ($missingRequired.Count -gt 0) {
+    Write-Section "Validation Failed"
+    exit 1
+}
 
-Write-Host "Repo root: $repoRoot"
-Write-Host "=== VALIDATION COMPLETE ==="
+Write-Section "Validation Complete"
