@@ -53,6 +53,7 @@
     "stylelint-config-tailwindcss": "^1.0.1",
     "stylelint-order": "^7.0.1",
     "tailwindcss": "^3.4.17",
-    "thesvg": "^2.1.4"
+    "thesvg": "^2.1.4",
+    "@zendeskgarden/svg-icons": "^8.4.0"
   }
 }
