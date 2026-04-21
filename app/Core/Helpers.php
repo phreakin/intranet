@@ -57,6 +57,12 @@ final class Helpers
         return self::loadSvgSet('/assets/svg/icons/white/');
     }
 
+    public static function svgsNav(): array
+    {
+        return self::loadSvgSet('/assets/svg/icons/nav/');
+    }
+
+
 
     private static function loadSvgSet(string $relativePath): array
     {
