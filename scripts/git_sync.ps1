@@ -6,7 +6,8 @@ param(
     [switch]$SkipPull,
     [switch]$SkipPush,
     [switch]$DryRun,
-    [switch]$VerboseOutput
+    [switch]$VerboseOutput,
+    [switch]$AllowPushFailure
 )
 
 $ErrorActionPreference = "Stop"
@@ -40,27 +41,36 @@ function Write-ErrMsg {
 function Invoke-Git {
     param(
         [Parameter(Mandatory = $true)]
-        [string]$Arguments,
+        [string[]]$Arguments,
         [switch]$AllowFailure
     )
 
+    $display = $Arguments -join " "
+
     if ($DryRun) {
-        Write-Host "[DRY-RUN] git $Arguments" -ForegroundColor Magenta
-        return ""
+        Write-Host "[DRY-RUN] git $display" -ForegroundColor Magenta
+        return @{
+            Output   = ""
+            ExitCode = 0
+        }
     }
 
     if ($VerboseOutput) {
-        Write-Info "Running: git $Arguments"
+        Write-Info "Running: git $display"
     }
 
-    $output = & git $Arguments.Split(" ") 2>&1
+    $output = & git @Arguments 2>&1
     $exitCode = $LASTEXITCODE
+    $text = ($output | Out-String).Trim()
 
     if (-not $AllowFailure -and $exitCode -ne 0) {
-        throw "Git command failed: git $Arguments`n$output"
+        throw "Git command failed: git $display`n$text"
     }
 
-    return ($output | Out-String).Trim()
+    return @{
+        Output   = $text
+        ExitCode = $exitCode
+    }
 }
 
 function Test-GitRepo {
@@ -70,20 +80,23 @@ function Test-GitRepo {
 }
 
 function Get-CurrentBranch {
-    $current = Invoke-Git -Arguments "rev-parse --abbrev-ref HEAD"
+    $result = Invoke-Git -Arguments @("rev-parse", "--abbrev-ref", "HEAD")
+    $current = $result.Output.Trim()
+
     if ([string]::IsNullOrWhiteSpace($current)) {
         throw "Unable to determine current git branch."
     }
-    return $current.Trim()
+
+    return $current
 }
 
 function Get-ChangedFiles {
-    $status = Invoke-Git -Arguments "status --porcelain"
-    if ([string]::IsNullOrWhiteSpace($status)) {
+    $result = Invoke-Git -Arguments @("status", "--porcelain")
+    if ([string]::IsNullOrWhiteSpace($result.Output)) {
         return @()
     }
 
-    return ($status -split "`r?`n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    return ($result.Output -split "`r?`n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
 }
 
 function Run-ValidationIfPresent {
@@ -163,15 +176,15 @@ function Get-AheadBehind {
         [string]$BranchName
     )
 
-    $result = Invoke-Git -Arguments "rev-list --left-right --count $RemoteName/$BranchName...HEAD"
-    if ([string]::IsNullOrWhiteSpace($result)) {
+    $result = Invoke-Git -Arguments @("rev-list", "--left-right", "--count", "$RemoteName/$BranchName...HEAD")
+    if ([string]::IsNullOrWhiteSpace($result.Output)) {
         return @{
             Behind = 0
             Ahead  = 0
         }
     }
 
-    $parts = $result -split "\s+"
+    $parts = $result.Output -split "\s+"
     if ($parts.Count -lt 2) {
         return @{
             Behind = 0
@@ -201,7 +214,7 @@ try {
     Run-ValidationIfPresent
 
     Write-Section "Stage All Changes"
-    Invoke-Git -Arguments "add ."
+    Invoke-Git -Arguments @("add", ".") | Out-Null
     Write-Success "All local changes staged with git add ."
 
     $changedFiles = Get-ChangedFiles
@@ -214,7 +227,7 @@ try {
         Write-Info "Commit message:"
         Write-Host "  $finalCommitMessage" -ForegroundColor White
 
-        Invoke-Git -Arguments "commit -m `"$finalCommitMessage`""
+        Invoke-Git -Arguments @("commit", "-m", $finalCommitMessage) | Out-Null
         Write-Success "Commit created."
     }
     else {
@@ -222,7 +235,7 @@ try {
     }
 
     Write-Section "Fetch Remote"
-    Invoke-Git -Arguments "fetch $Remote"
+    Invoke-Git -Arguments @("fetch", $Remote) | Out-Null
     Write-Success "Fetch complete."
 
     $aheadBehind = Get-AheadBehind -RemoteName $Remote -BranchName $Branch
@@ -232,7 +245,11 @@ try {
         Write-Section "Pull Remote Changes"
         Write-WarnMsg "Local branch is behind by $($aheadBehind.Behind) commit(s). Pulling with rebase."
 
-        Invoke-Git -Arguments "pull $Remote $Branch --rebase"
+        $pullResult = Invoke-Git -Arguments @("pull", $Remote, $Branch, "--rebase") -AllowFailure
+        if ($pullResult.ExitCode -ne 0) {
+            throw "Pull failed:`n$($pullResult.Output)"
+        }
+
         Write-Success "Pull with rebase completed."
     }
     elseif ($SkipPull) {
@@ -244,8 +261,22 @@ try {
 
     if (-not $SkipPush) {
         Write-Section "Push Changes"
-        Invoke-Git -Arguments "push $Remote $Branch"
-        Write-Success "Push successful."
+
+        $pushResult = Invoke-Git -Arguments @("push", $Remote, $Branch) -AllowFailure
+
+        if ($pushResult.ExitCode -ne 0) {
+            Write-ErrMsg "Push failed."
+            if (-not [string]::IsNullOrWhiteSpace($pushResult.Output)) {
+                Write-Host $pushResult.Output -ForegroundColor Red
+            }
+
+            if (-not $AllowPushFailure) {
+                throw "Push failed."
+            }
+        }
+        else {
+            Write-Success "Push successful."
+        }
     }
     else {
         Write-WarnMsg "Push skipped by option."
@@ -261,8 +292,10 @@ catch {
         Write-Host ""
         Write-Host "Suggested next steps:" -ForegroundColor Yellow
         Write-Host "  1. Run: git status"
-        Write-Host "  2. If rebase conflict happened: resolve files, then run git rebase --continue"
-        Write-Host "  3. Re-run this script after conflicts are resolved"
+        Write-Host "  2. Run: git remote -v"
+        Write-Host "  3. Run: git push origin main"
+        Write-Host "  4. If auth failed, refresh GitHub credentials/token"
+        Write-Host "  5. If branch is protected, push to a feature branch instead"
     }
 
     exit 1
