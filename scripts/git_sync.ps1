@@ -156,16 +156,18 @@ function Build-CommitMessage {
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     $count = $ChangedFiles.Count
 
-    $topFiles = $ChangedFiles |
-        ForEach-Object {
-            if ($_.Length -ge 4) {
-                $_.Substring(3).Trim()
-            }
-            else {
-                $_.Trim()
-            }
-        } |
-        Select-Object -First 5
+    $topFiles = @(
+        $ChangedFiles |
+            ForEach-Object {
+                if ($_.Length -ge 4) {
+                    $_.Substring(3).Trim()
+                }
+                else {
+                    $_.Trim()
+                }
+            } |
+            Select-Object -First 5
+    )
 
     $fileSummary = if ($topFiles.Count -gt 0) {
         $topFiles -join ", "
