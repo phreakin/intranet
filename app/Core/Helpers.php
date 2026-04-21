@@ -42,6 +42,24 @@ final class Helpers
         return $svgs;
     }
 
+    public static function svgsColor(): array
+    {
+        return self::loadSvgSet('/assets/svg/icons/color/');
+    }
+
+    public static function svgsBlack(): array
+    {
+        return self::loadSvgSet('/assets/svg/icons/black/');
+    }
+
+    public static function svgsWhite(): array
+    {
+        return self::loadSvgSet('/assets/svg/icons/white/');
+    }
+
+
+    
+
 
 
 
