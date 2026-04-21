@@ -24,9 +24,9 @@ foreach ($relativePath in $requiredPaths) {
     $resolvedPath = Join-Path $repoRoot $relativePath
 
     if (!(Test-Path -LiteralPath $resolvedPath)) {
-        Write-Host "❌ Missing required path: $relativePath"
+        Write-Host "[MISSING] Required path: $relativePath"
     } else {
-        Write-Host "✅ Found required path: $relativePath"
+        Write-Host "[FOUND] Required path: $relativePath"
     }
 }
 
@@ -34,9 +34,9 @@ foreach ($relativePath in $optionalPaths) {
     $resolvedPath = Join-Path $repoRoot $relativePath
 
     if (Test-Path -LiteralPath $resolvedPath) {
-        Write-Host "✅ Found optional path: $relativePath"
+        Write-Host "[FOUND] Optional path: $relativePath"
     } else {
-        Write-Host "ℹ️ Optional path not present: $relativePath"
+        Write-Host "[OPTIONAL] Path not present: $relativePath"
     }
 }
 
