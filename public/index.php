@@ -10,6 +10,7 @@ use Intranet\Modules\Authentication\Controllers\AuthController;
 use Intranet\Modules\Cms\Controllers\AdminCmsController;
 use Intranet\Modules\Cms\Controllers\PageController;
 use Intranet\Modules\Dashboard\Controllers\DashboardController;
+use Intranet\Modules\Moderation\Controllers\ModerationController;
 use Intranet\Modules\Posts\Controllers\PostController;
 use Intranet\Modules\Users\Controllers\UserController;
 
@@ -102,5 +103,11 @@ $router->add('POST', '/admin/cms/menus', static fn () => $adminCms->menuCreate()
 $router->add('POST', '/admin/cms/menus/{id}/delete', static fn (array $p) => $adminCms->menuDelete((int) $p['id']));
 $router->add('POST', '/admin/cms/menus/{id}/items', static fn (array $p) => $adminCms->menuItemCreate((int) $p['id']));
 $router->add('POST', '/admin/cms/menu-items/{id}/delete', static fn (array $p) => $adminCms->menuItemDelete((int) $p['id']));
+
+$moderation = new ModerationController();
+
+$router->add('GET', '/moderation', static fn () => $moderation->dashboard());
+$router->add('GET', '/moderation/dashboard', static fn () => $moderation->dashboard());
+$router->add('GET', '/moderation/widget', static fn () => $moderation->widget());
 
 $router->dispatch($_SERVER['REQUEST_METHOD'] ?? 'GET', $_SERVER['REQUEST_URI'] ?? '/');
