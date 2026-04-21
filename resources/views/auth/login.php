@@ -28,7 +28,7 @@
                 </div>
 
                 <button class="btn btn-primary w-100 py-2 fw-semibold" type="submit">
-                    <img src="<?= Helpers::svgs()['lock'] ?>" width="18" height="18" alt="">
+                    <img src="<?= Helpers::svgsNav()['users'] ?>" width="20">
                     Sign In
                 </button>
             </form>
